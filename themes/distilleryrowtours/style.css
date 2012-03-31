@@ -1,0 +1,40 @@
+/*
+Theme Name: Distillery Row 
+Custom Theme
+Theme URI: http://distilleryrowtours.com
+Description: Only the most super awesome theme yet!
+Author: Gabe's Imagination
+Author URI: http://gabesimagination.com
+Version: 1.0
+Tags:
+
+License: GPL
+License URI: http://www.gnu.org/copyleft/gpl.html
+ 
+ 
+Before you go all crazy editing this document, make sure to take a look at twitter Bootstrap. This theme relies heavily on the bootstrap, so look there first: http://twitter.github.com/bootstrap 
+*/
+#wrapper{
+	background: rgba(255,255,255,.9);
+	padding:  0 1%;
+}
+#pitch{
+	display: block;
+	height: 300px;
+}
+#main_cta{
+	display: block;
+	height: 100px;
+}
+#sidebar{
+	min-height: 200px;
+}
+#footer {
+	
+}
+#bg_image{
+	position: fixed;
+	z-index: -1;
+	top: 0;
+	left: 0;
+}

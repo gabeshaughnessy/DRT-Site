@@ -1,0 +1,413 @@
+/* Remove dotted border from around links after they are clicked */
+a:active { outline: none; }
+a:focus { outline: none; }
+
+#viewCartTable {
+  margin: 12px 0px 12px 0px;
+  border: 1px solid #CCCCCC;
+  width: 100%;
+  clear: both;
+}
+
+#viewCartTable td,
+#viewCartTable th {
+  padding: 5px 5px 5px 5px;
+  margin: 0px;
+  border-bottom: 1px solid #CCCCCC;
+  vertical-align: middle;
+  line-height: 1.5em;
+}
+
+#viewCartTable th {
+  background-color: #EEEEEE;
+  vertical-align: middle;
+}
+
+#viewCartTable td.noBorder {
+  border:none;
+}
+
+#viewCartTable td.navRow {
+
+}
+
+#viewCartTableNav {
+  margin: 0px;
+  width: 100%;
+  border: none !important;
+  display: table;
+}
+
+#viewCartTableNav .Cart66ButtonPrimary {
+
+}
+
+#viewCartTable a, 
+#viewCartTable tbody,
+#viewCartTable img,
+#viewCartTableNav a, 
+#viewCartTableNav tr,
+#viewCartTableNav th,
+#viewCartTableNav td,
+#viewCartTableNav tbody,
+#viewCartTableNav img {
+  border: none !important;
+}
+
+#continueShopping {
+  border: none;
+}
+
+input[type=submit] {
+  cursor: pointer;
+}
+
+#paypalCheckout {
+  width: 145px; 
+}
+
+#cart66Errors {
+  background-color: #FEE;
+  border: 1px solid red;
+  width: 500px;
+  padding:15px;
+  margin: 15px 0px;
+  clear: both;
+}
+
+#Cart66ForgotPassword { display: none; }
+
+#Cart66ReceiptExpectation { margin-top: 7px; font-style: italic;}
+
+#Cart66NewsletterList .Cart66CheckboxList {
+  margin: 0;
+  padding: 0;
+  list-style-type: none;
+}
+
+
+.purAddToCart {
+  vertical-align: middle; 
+  width: auto !important; 
+  margin: 7px 0px;
+  border: none !important;
+}
+
+.Cart66CartButton {
+  /* text-align: center; */
+  border: none !important;
+}
+
+.Cart66Price {
+  font-weight: bold;
+  font-size: 1.2em;
+  margin: 3px 7px 4px 0px;
+  display: inline-block;
+}
+
+.Cart66CustomFieldDesc {
+  color: #777;
+  font-style: italic;
+  display: block;
+  padding: 0px;
+  margin: 0px;
+}
+
+.Cart66CustomTextField {
+  width: 225px;
+}
+
+.Cart66CustomTextarea {
+  width: 225px;
+  height: 90px;
+}
+
+.Cart66TableMed {
+  width: auto;
+  border: 0px;
+  border-collapse: collapse;
+}
+
+.Cart66TableMed th,
+.Cart66TableMed td {
+  margin: 0px;
+  text-align: left;
+  border: none;
+  padding: 3px 7px;
+}
+
+.Cart66TableMed td {
+  border-top: 1px solid #CFCFCF;
+}
+
+.Cart66TableMed td.canceled {
+  color: #858585;
+}
+
+.Cart66Note {
+  color: #888;
+}
+
+.Cart66GravityFormDisplay {
+  display: block;
+}
+
+.Cart66RemoveFormLink {
+  display: inline-block;
+  width: 100%;
+  text-align: right;
+}
+
+.Cart66ProRequired {
+  font-weight:normal; 
+  color:#B33; 
+  font-size:11px; 
+  font-family:arial;
+  background-color: #FEE;
+  border: 2px solid #B33;
+  padding: 3px;
+  text-align: center;
+  -moz-border-radius: 5px;
+  -webkit-border-radius: 5px;
+}
+
+.Cart66ProRequired a {
+  color: #933;
+  font-weight: bold;
+}
+
+.Cart66Unavailable {
+  position: fixed;
+  border: 1px solid #70091A;
+  
+  -moz-border-radius: 5px;
+  -webkit-border-radius: 5px;
+  border-radius: 5px;
+  
+  -moz-box-shadow: 7px 7px 15px #CCCCCC;
+  -webkit-box-shadow: 7px 7px 15px #CCCCCC;
+  box-shadow: 7px 7px 15px #CCCCCC;
+  
+  background-color: #EEEEEE;
+  padding: 5px 20px;
+  margin: 0px;
+  top: 25%;
+  left: 32%;
+  width: 400px;
+  height: auto;
+  color: black;
+  z-index: 100;
+}
+
+.Cart66Unavailable h2 {
+  line-height: 1.5em !important;
+}
+
+.Cart66Unavailable p {
+  line-height: 1.2em !important;
+}
+
+.Cart66OutOfStock {
+  color: #70091A;
+  font-weight: bold;
+  font-size: 16px;
+}
+
+.Cart66AjaxWarning {
+  color: #C00;
+  border: 1px solid #C55;
+  background-color: #EEE;
+  width: 200px;
+  padding: 7px;
+}
+
+.inventoryCountTableModal {
+  margin: 5px 0px;
+  padding: 10px;
+  width: 100%;
+  border-collapse:collapse;
+  color: black;
+}
+
+.inventoryCountTableModal td {
+  padding: 3px 5px;
+  border-bottom: 1px solid #CCC;
+}
+
+/* Cart66 Widget CSS */
+
+#Cart66WidgetCartLink {
+  display: block;
+}
+
+/* Cart66 Button CSS */
+
+.Cart66ButtonPrimary, 
+.Cart66ButtonSecondary {
+  font-family: helvetica,arial;
+  font-size: 12px;
+  font-weight: normal;
+  display: inline-block;
+  padding: 0px 1.5em;
+  margin: 0px 5px 5px 5px !important;
+  width: auto !important;
+  border: 1px solid #454545;
+  height: 24px;
+  line-height: 1.2em;
+  -webkit-border-radius: 5px;
+  -moz-border-radius: 5px;
+  border-radius: 5px;
+  cursor: pointer;
+  overflow: visible;
+  background-image: url(images/btn-bg.png);
+  background-repeat: repeat-x;
+  background-color: #445e67;
+  color: #FFFFFF;
+}
+
+.Cart66ButtonSecondary {
+  background-color: #2C3538;
+}
+
+a.Cart66ButtonPrimary, 
+a.Cart66ButtonSecondary {
+  display: inline-block;
+  text-decoration: none;
+  height: 24px;
+  padding: 0px 1.5em;
+  line-height: 2em;
+  color: #FFFFFF;
+}
+
+/* Cart66 Form CSS */
+.Cart66Success,
+.Cart66Error {
+  background-color: #FEE;
+  border: 1px solid red;
+  margin: 10px 0px;
+  padding: 5px 20px;
+  -moz-border-radius: 5px; 
+  -webkit-border-radius: 5px;
+  color: #633;
+}
+
+.Cart66Success {
+  background-color: #EFE;
+  border: 1px solid green;
+  color: #252;
+}
+
+.Cart66Success h1 {
+  color: #BCB;
+}
+.Cart66Error h1 {
+  color: #CBB;
+  font-size: 1.5em;
+}
+
+.phorm2 {
+  min-width: 550px;
+  clear: both;
+}
+
+.phorm2 .errorField {
+  border: 1px solid red;
+  background-color: #FEE;
+}
+
+.phorm2 ul {
+  margin: 0px;
+  padding: 0px;
+}
+.phorm2 ul li {
+  list-style: none !important;
+  background-image: none;
+  margin: 0px;
+  padding: 3px 0px 4px 0px !important;
+}
+
+.phorm2 ul li label {
+  display: inline-block;
+  width: 135px;
+  text-align: right;
+  vertical-align: top;
+  margin-top: 3px;
+  margin-right: 3px;
+}
+
+.phorm2 ul li label.short {
+  width: 80px;
+}
+
+.phorm2 ul.shortLabels li label {
+  width: 80px;
+}
+
+.phorm2 ul li span.description,
+.phorm2 ul li p.description {
+  color: #858585;
+  font-style: italic;
+  margin: 0px 0px 0px 140px;
+  padding: 2px 0px 3px 0px;
+  line-height: 1.2em !important;
+}
+
+.phorm2 ul li span.description {
+  margin: 0px 0px 0px 7px;
+}
+
+.phorm2 ul.shortLabels li p.description {
+  margin-left: 90px;
+}
+
+.phorm2 ul li h3 {
+  margin: 8px 0px 0px 0px !important;
+  padding: 0px;
+}
+
+.phorm2 .button {
+  width: 75px;
+}
+
+.phorm2 .Cart66ErrorField {
+  background-color: #FEE;
+  border: 1px solid #F75;
+  padding: 3px;
+}
+
+.phorm2 .stateField {
+  width: 25px !important;
+  margin-left: 2px;
+}
+
+.phorm2 input[type=text],
+.phorm2 input[type=password] {
+  width: 130px;
+}
+
+.phorm2 p {
+  margin-bottom: 2px !important;
+}
+
+/* Gravity Forms Cart View Styles */
+table .entry-details {
+  width: 100%;
+}
+
+table .entry-details tbody {
+  padding: 0px;
+  margin: 0px;
+  background-color: #fff;
+}
+
+#viewCartTable td .entry-view-field-name {
+  font-weight: bold;
+  background-color: #eee;
+  margin: 0px;
+  border: none;
+}
+
+td .entry-view-field-value {
+  padding-left: 25px !important;
+  border: none !important;
+}

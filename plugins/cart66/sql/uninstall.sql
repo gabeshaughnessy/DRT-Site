@@ -1,0 +1,12 @@
+drop table if exists `[prefix]accounts`;
+drop table if exists `[prefix]cart_settings`;
+drop table if exists `[prefix]downloads`;
+drop table if exists `[prefix]order_items`;
+drop table if exists `[prefix]orders`;
+drop table if exists `[prefix]products`;
+drop table if exists `[prefix]promotions`;
+drop table if exists `[prefix]shipping_methods`;
+drop table if exists `[prefix]shipping_rates`;
+drop table if exists `[prefix]shipping_rules`;
+drop table if exists `[prefix]tax_rates`;
+drop table if exists `[prefix]inventory`;

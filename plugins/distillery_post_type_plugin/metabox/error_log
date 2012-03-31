@@ -1,0 +1,4 @@
+[07-Feb-2012 22:31:45] PHP Warning:  Invalid argument supplied for foreach() in /home2/gabesima/public_html/distilleryrowtours/wp-content/plugins/distillery_post_type_plugin/lib/metabox/init.php on line 34
+[07-Feb-2012 22:31:45] PHP Fatal error:  Call to undefined function  add_action() in /home2/gabesima/public_html/distilleryrowtours/wp-content/plugins/distillery_post_type_plugin/lib/metabox/init.php on line 329
+[07-Feb-2012 22:33:47] PHP Warning:  Invalid argument supplied for foreach() in /home2/gabesima/public_html/distilleryrowtours/wp-content/plugins/distillery_post_type_plugin/lib/metabox/init.php on line 34
+[07-Feb-2012 22:33:47] PHP Fatal error:  Call to undefined function  add_action() in /home2/gabesima/public_html/distilleryrowtours/wp-content/plugins/distillery_post_type_plugin/lib/metabox/init.php on line 329

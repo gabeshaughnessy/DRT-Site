@@ -1,0 +1,2655 @@
+@charset "UTF-8";
+/* CSS Document */
+
+h1, h2, h3, h4 {
+	font-weight:bold;
+	margin:0;
+	clear:none;
+}
+
+#rezgo {
+	font-family:Arial,"Lucida Sans","Lucida Grande",Verdana,sans-serif;
+	color:#000;
+	font-size:14px;
+	line-height:17px;
+	width:850px;
+	margin:0 auto 10px;
+	padding-bottom:10px;
+	-moz-border-radius:10px 10px 10px 10px;
+	-webkit-border-radius:10px 10px 10px 10px;
+	-khtml-border-radius:10px;
+	background:url(images/bg_wrp.png) 170% 0 repeat-y #eee;
+	text-align:left;
+}
+
+/* element styles */
+#rezgo input, #rezgo textarea {
+	font-size:14px;
+	background:none repeat scroll 0 0 #FFFFFF;
+	border:1px solid #B2B2B2;
+	padding:2px;
+	margin:0;
+	font-family:Arial,"Lucida Sans","Lucida Grande",Verdana,sans-serif;
+}
+
+#rezgo input:focus, #rezgo textarea:focus {
+	background-color:#eee;
+}
+
+#rezgo img {
+	margin:auto;
+	border:none;
+}
+
+#rezgo .clear {
+	clear:both;
+}
+
+#rezgo hr {
+	color: #ccc;
+	background-color: #ccc;
+	height: 1px;
+	margin:0 2px;
+}
+
+#rezgo .checkbox {
+	border:none;
+}
+
+#rezgo table {
+	border-collapse:separate;
+	vertical-align:middle;
+	border:none;
+	margin:0;
+	border-spacing:1px;
+}
+
+/* required field */
+#rezgo em {
+	color:#CC0000;
+}
+
+#rezgo h1 {
+	font-size:20px;
+	line-height:24px;
+}
+
+#rezgo h2 {
+	font-size:18px;
+	line-height:22px;
+}
+
+#rezgo h3 {
+	font-size:16px;
+	line-height:20px;
+}
+
+#rezgo .price_pos {
+	color:#006699;
+}
+
+#rezgo .price_neg {
+	color:#CC0000;
+}
+
+
+/*********************************  rezgo container styles   ***************************************/
+
+#left_panel {
+	float:left;
+	width:63%;
+	position:relative;
+	padding:10px 0;
+	clear:both;
+}
+
+#right_panel {
+	float:right;
+	padding:10px 0;
+	width:34.5%;
+	min-height:100%;
+}
+
+#panel_full {
+	float:left;
+	width:100%;
+	position:relative;
+	padding-bottom:30px;
+}
+
+/* wrapper for tour page */
+#rezgo.wrp_list {
+}
+
+/* wrapper for booking page */
+#rezgo.wrp_book {
+	background:#fff;
+	background-image:none;
+}
+/**************************buttons********************************/
+/*  */
+#rezgo .submit { /*complete booking btn */
+	background:url(images/btn_bg03.png) repeat-x scroll center center #627C92;
+	color:#fff;
+	font-weight:bold;
+	font-size:18px;
+	padding:5px 15px;
+	text-align:center;
+	float:right;
+	margin:20px 32px 10px 0;
+	border:5px solid #ccc;
+	-moz-border-radius:10px 10px 10px 10px;
+	-webkit-border-radius:10px 10px 10px 10px;
+	-khtml-border-radius:10px;
+	border-radius: 10px;
+	cursor:pointer;
+	display:inline;
+	overflow:visible;
+}
+
+#rezgo .submit:focus { /*complete booking btn */
+	background:url(images/btn_bg03.png) repeat-x scroll center center #627C92;
+}
+
+#rezgo .submit:hover {
+	border:5px solid #999999;
+}
+
+#flight .btn_search {
+	background:url(images/rezgo_buttons.png) no-repeat scroll -190px -141px transparent;
+	border:none;
+	height:33px;
+	position:relative;
+	text-indent:-99999px;
+	top:25px;
+	width:76px;
+	cursor:pointer;
+	font-size:0; /* for IE7 */
+	line-height:0; /* for IE7 */
+}
+
+#flight .btn_search:focus {
+	background:url(images/rezgo_buttons.png) no-repeat scroll -190px -141px transparent;
+}
+
+#flight .btn_search:hover {
+} /* date search */
+
+#rezgo .previous {
+	background:url(images/btn_bg03.png) repeat-x scroll center center #627C92;
+	color:#fff;
+	font-weight:bold;
+	font-size:18px;
+	padding:5px 15px;
+	text-align:center;
+	float:left;
+	margin:20px 10px 0 32px;
+	border:5px solid #ccc;
+	-moz-border-radius:10px 10px 10px 10px;
+	-webkit-border-radius:10px 10px 10px 10px;
+	-khtml-border-radius:10px;
+	border-radius: 10px;
+	cursor:pointer;
+	overflow:visible;
+	display:inline;
+}
+
+#rezgo .promo_submit {
+	background:url(images/rezgo_buttons.png) no-repeat -190px -180px;
+	color:#fff;
+	font-weight:bold;
+	font-size:0px; /* for stupid IE7 */
+	line-height:0; /* for stupid IE7 */
+	width:76px;
+	height:26px;
+	border:none;
+	text-indent:-9999px;
+	position:relative;
+	vertical-align:top;
+}
+
+#rezgo #right_search .btn_search {
+	background:url(images/rezgo_buttons.png) no-repeat -190px -46px;
+	border:none;
+	font-size:0px; /* for IE7 */
+	line-height:0; /* for IE7 */
+	width:75px; 
+	height:24px;
+	text-indent:-9999px;
+	vertical-align:top;
+}
+
+#rezgo #promo input.promo_submit_sidebar {
+	background:url(images/rezgo_buttons.png) no-repeat -190px -180px;
+	border:none;
+	font-size:0px; /* for IE7 */
+	line-height:0; /* for IE7 */
+	width:75px; 
+	height:24px;
+	text-indent:-9999px;
+	vertical-align:top;
+}
+
+#rezgo #right_search .btn_search:hover, #rezgo #promo .promo_submit_sidebar:hover {	
+	cursor:pointer;
+}
+
+#rezgo .previous:hover {
+	border:5px solid #999999;
+}
+
+#rezgo .btn_print_one {
+	overflow:hidden;
+}
+
+#rezgo .btn_print_both .print_voucher, #rezgo .btn_print_both .print_invoice {	
+	float:left;
+	width:50%;
+	margin:15px auto;
+}
+
+#rezgo .btn_print_one .print_voucher  {
+	display:block;
+}
+
+#rezgo .btn_print_one .print_invoice {
+	float:none;
+}
+
+#rezgo .print_voucher a, #rezgo .print_invoice a {
+	display:block;
+	width:300px;
+	margin:auto;
+	padding:5px;
+	font-size:20px;
+	font-weight:bold;
+	text-decoration:none;
+	line-height:30px;
+	text-align:center;
+	color:#fff;
+	-moz-border-radius:10px 10px 10px 10px;
+	-webkit-border-radius:10px 10px 10px 10px;
+	-khtml-border-radius:10px;
+	border-radius: 10px;
+	height:30px;
+	border:5px solid #FAA248;
+	background: -webkit-gradient(linear, left top, left bottom, from(#FFC105), to(#FAA248));
+	background: -moz-linear-gradient(top,  #FFC105,  #FAA248);
+	filter: progid:DXImageTransform.Microsoft.gradient(startColorstr='#FFC105', endColorstr='#FAA248');
+}
+
+#rezgo .print_voucher a:hover, #rezgo .print_invoice a:hover {
+	line-height:30px;
+	text-align:center;
+	color:#FFf;
+	font-size:20px;
+	font-weight:bold;
+	text-decoration:none;
+	border:5px solid #FFCE00;
+	background: -webkit-gradient(linear, left top, left bottom, from(#FAA248), to(#FFC105));
+	background: -moz-linear-gradient(top,  #FAA248,  #FFC105);
+	filter: progid:DXImageTransform.Microsoft.gradient(startColorstr='#FAA248', endColorstr='#FFC105');
+}
+
+/********************************tour page style***************************************/
+
+/* header and breadcrumb */
+#rezgo #left_panel h1.header  {
+	color:#666;
+	font-size:24px;
+	line-height:30px;
+	text-decoration:none;
+	font-family:"Myriad Pro","Trebuchet MS","Helvetica Neue",Helvetica,Arial,Sans-Serif;
+	float:left;
+	margin:0;
+}
+
+#rezgo #left_panel h1.header a {
+	color:#993333;
+	font-size:20px;
+	text-decoration: none;
+}
+
+#rezgo #left_panel h1.header a:hover {
+	text-decoration:underline;
+}
+
+#rezgo .breadcrumb {
+	margin:0px 20px;
+	overflow:hidden;
+}
+
+#rezgo .breadcrumb a.back {
+	color:#666;
+	text-decoration:none;
+	font-weight:bold;
+	font-family:"Myriad Pro","Trebuchet MS","Helvetica Neue",Helvetica,Arial,Sans-Serif;
+	text-align:right;
+	float:right;
+	display:block;
+	padding-left:25px;
+	font-size:14px;
+	line-height:28px;
+}
+
+#rezgo .breadcrumb .back:hover {
+	font-weight:bold;
+	color:#FFC105;
+}
+
+#rezgo .breadcrumb .back span {
+	color:#FFC105;
+	font-weight:bold;
+	font-size:16px;
+}
+
+#rezgo .breadcrumb .back span a {
+	color:#FFC105;
+}
+
+#rezgo .breadcrumb .back span a:hover {
+	color:#8DA9B0;
+}
+
+#rezgo .breadcrumb a.clear_search  {
+	color:#666;
+	text-decoration:none;
+	font-weight:bold;
+	font-family:"Myriad Pro","Trebuchet MS","Helvetica Neue",Helvetica,Arial,Sans-Serif;
+	text-align:right;
+	float:right;
+	display:block;
+	padding-left:20px;
+	font-size:14px;
+	line-height:22px;
+	background:url(images/refresh.png) no-repeat 0 0;
+}
+
+#rezgo .breadcrumb .clear_search:hover {
+	font-weight:bold;
+	color:#ef9014;
+}
+
+/***************** date search element style ********************/
+#flight, .active, #calroot {
+	-moz-border-radius:4px;	
+	-webkit-border-radius:4px;		
+}
+
+#flight {
+	font-family:sans-serif;	
+	background:url(images/bg_date_search.png);
+	height:91px;
+	color:#ccc;
+	font-size:13px;
+	width:522px;
+	margin:0 auto;
+	font-weight:bold;
+}
+
+#flight label {
+	float:left;
+	width:190px;
+	display:block;
+	padding:15px 10px 15px 15px;
+	border:1px solid transparent;	
+	color:#ccc;
+}
+
+#flight .active {
+	background:#364148;
+	-moz-border-radius-bottomleft:0;
+	-moz-border-radius-bottomright:0;	
+	-webkit-border-bottom-left-radius:0;
+	-webkit-border-bottom-right-radius:0;	
+}
+
+#flight .active input {
+	text-shadow:none;
+}
+
+/* date input */
+#flight .date {		
+	float:left;
+	display:block;
+	border:0;
+	background-color:transparent;
+	font-size:16px;
+	color:#fff;
+	text-shadow:0 0 1px #666;
+	width:155px;
+	cursor:pointer;
+}
+
+/* date input trigger element */
+#flight .caltrigger {
+	display:block;
+	width:30px;
+	height:32px;
+	float:left;
+	background:url(images/cal_icon.jpg) no-repeat 0 0;
+	margin-top:-8px;
+	-moz-border-radius:3px;
+	-webkit-border-radius:3px;
+}
+
+#flight .active .caltrigger {
+	background-position: 0 -32px;		
+}
+
+/* For the details, see: http://flowplayer.org/tools/dateinput/index.html#skinning */
+
+/* calendar root element */
+#calroot {
+	/* place on top of other elements. set a higher value if nessessary */
+	z-index:1;
+	padding:10px 0;
+	width:217px;	
+	display:none;
+	margin:1px 0 0 -16px;
+	background:url(images/bg_calendar.png) repeat-x 0 14px;
+	
+	-moz-border-radius-topleft:0;
+	-moz-border-radius-topright:0;	
+	-webkit-border-top-left-radius:0;
+	-webkit-border-top-right-radius:0;	
+	
+	display:block;
+	left:228px;
+	position:absolute;
+	top:96px;	
+}
+
+/* head. contains title, prev/next month controls and possible month/year selectors */
+#calhead {	
+	padding:2px 0;
+	height:22px;
+} 
+
+#caltitle {
+	font-size:14px;
+	color:#fff;	
+	float:left;
+	text-align:center;
+	width:140px;
+	line-height:20px;
+}
+
+#calnext, #calprev {
+	display:block;
+	width:20px;
+	height:20px;
+	background:transparent url(images/scroll_left.png) no-repeat scroll center center;
+	float:left;
+	cursor:pointer;
+	margin-left:9px;
+	margin-right:9px;
+}
+
+#calnext {
+	background-image:url(images/scroll_right.png);
+	float:right;
+	margin-right:9px;
+}
+
+#calprev.caldisabled, #calnext.caldisabled {
+	visibility:hidden;	
+}
+
+/* year/month selector */
+#caltitle select {
+	font-size:10px;	
+}
+
+/* names of the days */
+#caldays {
+	height:14px;
+	padding-left:12px;
+	color:#999999;
+}
+
+#caldays span {
+	display:block;
+	float:left;
+	width:28.5px;
+	text-align:center;
+	font-size:11px;
+}
+
+/* container for weeks */
+#calweeks {
+	margin-top:4px;
+	padding-left:12px;
+}
+
+/* single week */
+.calweek {
+	clear:left;
+	height:22px;
+}
+
+/* single day */
+.calweek a {
+	display:block;
+	float:left;
+	width:27px;
+	height:20px;
+	text-decoration:none;
+	font-size:13px;
+	font-weight:bold;
+	margin-left:1px;
+	text-align:center;
+	line-height:20px;
+	color:#D8CDAE;
+	-moz-border-radius:3px;
+	-webkit-border-radius:3px; 		
+	background:#627C92;
+} 
+
+/* different states */
+.calweek a:hover, .calfocus {
+	background-color:627C92;	
+	color:#990000;
+}
+
+/* sunday */
+a.calsun {
+	color:red;		
+}
+
+/* offmonth day */
+a.caloff {
+	color:#999;	
+	background:#ccc;	
+}
+
+a.caloff:hover {
+	background-color:#ddd;		
+}
+
+
+/* unselecteble day */
+a.caldisabled {
+	background-color:#ccc !important;
+	color:#ddd	!important;
+	cursor:default;
+}
+
+
+/* current date */
+#calcurrent {
+	background-color:#ffc105;
+	color:#627C92;
+}
+
+/* today */
+#caltoday {
+	background-color:#627C92;
+	color:#FFC105;
+}
+
+#rezgo #left_panel .item {
+	display:block;
+	border-bottom:1px solid #ccc;
+	min-height:160px;
+	margin:10px 20px;
+	overflow:hidden;
+}
+
+#rezgo #left_panel .last {
+	border-bottom:none;
+}
+
+#rezgo #left_panel .item .image {
+	clear:both;
+	float:left;
+	width:165px;
+	height:165px;
+	background:url(images/img_shadow.png) 0 0 no-repeat;
+}
+
+#rezgo #left_panel .item .image img {
+	width:145px;
+	height:145px;
+	position:relative;
+	top:6px;
+	left:6px;
+}
+
+#rezgo #left_panel h1.tour_title {
+	display:block;
+	clear:right;
+	margin:0 0 5px 170px;
+	font-weight:bold;
+	color:#2E4457;
+}
+
+#rezgo #left_panel h1.tour_title a {
+	color:#2E4457;
+	text-decoration:none;
+	font-size: 20px;
+    line-height: 24px;
+	font-weight:bold;
+}
+
+#rezgo #left_panel h1.tour_title a:hover {
+	color:#999;
+}
+
+#rezgo #left_panel .location {
+	margin-left:170px;
+	font-size:14px;
+}
+
+#rezgo #left_panel .intro {
+	margin-left:170px;
+	margin-top:5px;
+	color:#333;
+	font-size:14px;
+}
+
+#rezgo #left_panel .price {
+	margin:10px 0 5px 170px;
+	font-size:20px;
+	font-weight:bold;
+	color:#2E4457;
+}
+
+#rezgo #left_panel .duration span, #rezgo #left_panel .location span, #rezgo #left_panel .tags span, #rezgo #left_panel .price span { /*label for duration/location/price/tags */
+	color:#999;
+	font-size:14px;
+}
+
+#rezgo #left_panel .tags { /*tags style */
+	margin:10px 0 5px 170px;
+}
+
+#rezgo #left_panel .tags a {
+	color:#993333;
+	font-size:14px;
+}
+
+#rezgo #left_panel .btn_details a { /*details button styles */
+	text-decoration:none;
+	color:#FFFFFF;
+	text-shadow:1px 1px #000000;
+	font-size:20px;
+	line-height:33px;
+	float:right;
+	height:36px;
+	width:85px;
+	margin-bottom:10px;
+	background:url(images/rezgo_buttons.png) no-repeat -1px -74px;
+	font-variant:small-caps;
+	font-family:"Myriad Pro","Trebuchet MS","Helvetica Neue",Helvetica,Arial,Sans-Serif;
+	text-align:center;
+}
+
+#rezgo #left_panel .btn_details {
+}
+
+#rezgo #left_panel .item .btn_details a:hover {
+	background:url(images/rezgo_buttons.png) no-repeat -93px -74px;
+}
+
+/*paging styles */
+#rezgo #left_panel .more_results {
+	float:right;
+	background:url(images/arrow_blue_R.png) no-repeat right 0;
+	height:15px;
+	padding-right:17px;
+	margin-top:20px;
+	cursor:pointer;
+}
+
+#rezgo #left_panel .more_results a {
+	line-height:16px;
+	font-weight:bold;
+	font-size:14px;
+	color:#4985bf;
+	text-decoration:underline;
+}
+
+#rezgo #left_panel .more_results a:hover {
+	text-decoration:underline;
+	color:#4985bf;
+}
+
+#rezgo #left_panel .prev_results {
+	float:left;
+	background:url(images/arrow_blue_L.png) no-repeat left 0;
+	height:15px;
+	padding-left:17px;
+	margin-top:20px;
+	text-decoration:none;
+	line-height:16px;
+	font-weight:bold;
+	font-size:14px;
+	cursor:pointer;
+	color:#4985bf;
+}
+
+#rezgo #left_panel .prev_results a {
+	color:#4985bf;
+	text-decoration:underline;
+	line-height:16px;
+	font-weight:bold;
+	font-size:14px;
+}
+
+#rezgo #left_panel .prev_results a:hover {
+	text-decoration:underline;
+	color:#4985bf;
+}
+
+/* tour detail tab styles */
+#rezgo #tab_box {
+	padding:10px;
+	width:90%;
+	margin:0 auto;
+}
+
+#rezgo #tab_box ul.tabs {
+	margin:0;
+	padding:0;
+}
+
+#rezgo #tab_box ul.tabs li {
+	list-style:none;
+	display:inline;
+}
+
+#rezgo #tab_box ul.tabs li a {
+	background:url(images/tabs_tour_detail.png) no-repeat 0 -49px;
+	color:#fff;
+	padding:8px 15px;
+	text-decoration:none;
+	font-size:10px;
+	font-family:Verdana, Arial, Helvetica, sans-serif;
+	font-weight:bold;
+	text-transform:uppercase;
+	outline:none;
+}
+
+#rezgo #tab_box ul.tabs li a:hover {
+	background:url(images/tabs_tour_detail.png) no-repeat 0 -81px;
+	padding-top:18px;
+}
+
+#rezgo #tab_box ul.tabs li a.current {
+	background:url(images/tabs_tour_detail.png) no-repeat 0 3px;
+	padding-top:18px;
+}
+
+#rezgo #tab_box ul.tabs li.book_tab a {
+	background:url(images/tabs_tour_detail.png) no-repeat -120px -41px;
+	padding:16px 16px 8px 18px;
+}
+
+#rezgo #tab_box ul.tabs li.book_tab a:hover {
+	background:url(images/tabs_tour_detail.png) no-repeat -120px -81px;
+	padding-top:16px;
+}
+
+#rezgo #tab_box ul.tabs li.book_tab a.current {
+	background:url(images/tabs_tour_detail.png) no-repeat -120px 0;
+}
+	
+#rezgo #tab_box .content {
+	background-color:#ffffff;
+	padding:10px;
+	border:5px solid #336699;
+	margin-top:6px;
+	overflow:hidden;
+	font-size:14px;
+}
+
+#rezgo #content_2, #rezgo #content_3, #rezgo #content_4 { 
+	display:none; 
+}
+
+#rezgo .ui-tabs .ui-tabs-hide {
+  display: none;
+}
+
+#rezgo #tab_box .content h4 { /*tab label*/
+	border-bottom:1px solid #CCCCCC;
+	color:#666666;
+	display:block;
+	font-size:14px;
+	line-height:18px;
+	margin-bottom:3px;
+	margin-top:5px;
+	padding-bottom:5px;
+}
+
+#rezgo #tab_box .content p {
+}
+
+#rezgo #tab_box .content hr {
+	color: #ccc;
+	background-color: #ccc;
+	height: 1px;
+}
+
+/*Checkout Tab styles */
+#rezgo #tab_box .op_title {
+	background:url(images/arrow_red_angle_down.png) no-repeat scroll 0 0 transparent;
+	font-size:17px;
+	font-weight:bold;
+	color:#336699;
+	line-height:20px;
+	text-indent:25px;
+}
+
+#rezgo #tab_box .op_title span {
+	color:#90000;
+	font-size:15px;
+	display:block;
+}
+
+#rezgo #tab_box .panes {
+	margin-top:-1px;
+}
+
+#rezgo #tab_box span.duration {
+	float:left;
+	font-size:12px;
+	color:#999;
+	font-weight:bold;
+	margin:5px 5px 0 5px;
+}
+
+#rezgo #tab_box span.memo {
+	font-size:12px;
+	font-weight:bold;
+	color:#990000;
+	display:block;
+	text-align:right;
+	margin:5px 0 0;
+}
+
+#rezgo #tab_box span.no_availability {
+	clear:left;
+	color:#666666;
+	display:block;
+	float:left;
+	font-size:14px;
+	font-weight:bold;
+	margin:5px 5px 0;
+}
+
+
+#rezgo #tab_box ul.checkout_box {
+	padding:0;
+	margin:0;
+	overflow:hidden;
+	border-bottom:1px dotted #ccc;
+	clear:both;
+}
+
+#rezgo #tab_box li.price_op, #rezgo #tab_box li.quantity, #rezgo #tab_box li.discount_price, #rezgo #tab_box li.price {
+	background:none;
+	color:#333;
+	float:left;
+	font-size:12px;
+	font-weight:bold;
+	list-style:none outside none;
+	margin:2px;
+	padding:2px 4px;
+	width:60%;
+}
+
+#rezgo #tab_box li.discount_price, #rezgo #tab_box li.price {
+	width:20%;
+	text-align:right;
+	white-space:nowrap;
+	line-height:14px;
+}
+
+#rezgo #tab_box li.quantity {
+	width:12%;
+	text-align:right;
+	white-space:nowrap;
+}
+
+#rezgo #tab_box li.quantity input {
+	text-align:right;
+	font-size:12px;
+	margin-right:2px;
+	vertical-align:middle;
+	width:30px;
+}
+
+#rezgo #tab_box li.price span {
+	color:#990000;
+	text-decoration:line-through;
+	white-space:nowrap;
+	font-size:12px;
+	display:block;
+}
+
+#rezgo #tab_box li.label {
+	background:none repeat scroll 0 0 #CCCCCC;
+	color:#336699;
+	text-decoration:none;
+	border:none;
+	line-height:17px;
+}
+
+#rezgo #tab_box ul.label {
+	border:none;
+}
+
+#rezgo #tab_box span.checkout_book {
+	display:inline;
+	background:#fff;
+	border:2px solid #336699;
+	margin:10px 0px 5px;
+	float:right;
+	padding:1px;
+}
+
+#rezgo #tab_box span.checkout_book:hover {
+	border:2px solid #990000;
+}
+
+#rezgo #tab_box input.checkout_book {
+	font-size:14px;
+	font-weight:bold;
+	color:#fff;
+	background:#336699;
+	padding:4px 10px;
+	text-align:center;
+	border:none;
+	display:inline;
+	margin:0;
+	width:auto; 
+	overflow:visible;
+}
+
+#rezgo #tab_box input.checkout_book:hover {
+	background:#990000;
+	cursor:pointer;
+}
+
+#rezgo span.promocode {
+	color:#666;
+	font-weight:bold;
+	height:23px;
+	font-size:12px;
+	float:left;
+	margin-top:15px;
+}
+
+#rezgo .promo_input {
+	width:100px;
+}
+
+#rezgo #alternate_op {
+	clear:both;
+	background:url(images/arrow_alt_option.png) no-repeat 400px 3px;
+	height:30px;
+	position:relative;
+	z-index:100;
+}
+
+#rezgo .option_contents {
+	border:5px solid #ccc;
+	overflow:hidden;
+	padding:5px;
+	background:#ddd;
+	position:relative;
+	top:-5px;
+}
+
+#rezgo .option_contents .alt_title {
+	color:#336699;
+	font-size:14px;
+	font-weight:bold;
+	background:none;
+	line-height:25px;
+}
+
+#rezgo .option_contents label {
+	font-size:13px;
+	font-weight:bold;
+	line-height:25px;
+	color:#000;
+}
+
+#rezgo .option_contents ul.alt_title {
+	margin:0;
+	padding:0;
+}
+
+#rezgo .option_contents ul.alt_title li {
+	list-style:none;
+	padding: 0 3px;
+	color:#fff;
+	background:#336699;
+	font-size:13px;
+}
+	
+#rezgo .option_contents ul.alt_result {
+	margin:0;
+	padding:0;
+}
+
+#rezgo .option_contents ul.alt_result li {
+	list-style:none;
+	border-top:1px solid #ccc;
+	padding:3px;
+}
+
+#rezgo .option_contents ul.alt_result li a {
+	text-decoration:none;
+	color:#990000;
+}
+
+#rezgo .option_contents ul.alt_result li a:hover, #rezgo .option_contents ul.alt_result li:hover a {
+	text-decoration:none;
+	color:#990000;
+	cursor:pointer;
+}
+
+#rezgo .option_contents li span.alt_op {
+	display:inline-block;
+	width:70%;
+	text-indent:8px;
+}
+
+#rezgo .option_contents li span.alt_avail {
+	display:inline-block;
+	text-align:center;
+	width:27%;
+}
+
+#rezgo .option_contents ul.alt_result li:hover a {
+	background:#fff;
+	/*display:block;*/
+	text-decoration:none;
+}
+
+
+/******************** style for right side element *****************************/
+
+#rezgo #right_tags, #rezgo #right_search, #share, #rezgo #promo {
+	left:1px;
+	z-index:1;
+}
+
+#rezgo #right_tags .item, #rezgo #right_search .item, #rezgo #promo .promo_entered_sidebar, #rezgo #promo .promo_hidden_sidebar {
+	display:block;
+	padding:5px 15px 10px 15px;
+	margin:0 auto;
+	overflow:hidden;
+	z-index:1;
+	font-size:14px;
+}
+
+#rezgo #right_tags .item a, #rezgo #right_search .item a, #rezgo #promo .promo_entered_sidebar a, #rezgo #promo .promo_hidden_sidebar a, #rezgo .promocode a {
+	color:#993333;
+}
+
+#rezgo #right_search {
+}
+
+#rezgo #right_tags h1, #rezgo #right_search h1, #rezgo #calendar h1, #rezgo #map h1, #rezgo #carousel h1, #rezgo #promo h1 {
+	background:url(images/bg_right_header.png) right bottom no-repeat;
+	height:35px;
+	width:103%;
+	font-weight:normal;
+	color:#666;
+	font-family:"Myriad Pro","Trebuchet MS","Helvetica Neue",Helvetica,Arial,Sans-Serif;
+	text-indent:15px;
+	margin:0;
+	line-height:30px;
+	/*position:relative; problem with ie 7*/
+	z-index:0;
+	font-size:18px;
+	padding:0;
+}
+
+#rezgo #right_tags a {
+	color:#993333;
+	text-decoration:none;
+	line-height:120%;
+}
+
+#rezgo #right_tags a:hover {
+	text-decoration:underline;
+}
+
+#rezgo #right_search .search_box {
+	margin:5px;
+}
+
+#rezgo #right_search span.search_label {
+	display:block;
+	float:left;
+	width:70px;
+	font-weight:bold;
+	color:#666;
+}
+
+#rezgo #right_search .keyword_search, #rezgo #promo .promo_input_sidebar {
+	width:165px;
+}
+
+#rezgo #carousel {
+	min-height:115px;
+}
+
+#rezgo input.promocode {
+	width:160px;
+	height:19px;
+}
+
+#rezgo #calendar {
+	min-height:300px;
+	position:relative;
+}
+
+#rezgo #calendar .legend {
+	margin-left:45px;
+	position:absolute;
+	bottom:2px;
+}
+
+#rezgo #calendar .legend_item {
+	display:inline-block;
+	margin-right:4px;
+	padding:4px;
+}
+
+#rezgo #calendar .legend_item .legend_available {
+	background-color:#B5CBDD;
+	width:10px;
+	height:10px;
+}
+
+#rezgo #calendar .legend_item .legend_unavailable {
+	background-color:#DDDDDD;
+	width:10px;
+	height:10px;
+	margin-left:50px;
+}
+
+#rezgo #calendar .legend_item .legend_full {
+	background-color:#ECAB5D;
+	width:10px;
+	height:10px;
+	margin-left:60px;
+}
+
+#rezgo #calendar .legend_item span {
+	display:inline;
+	padding-left:15px;
+	white-space:nowrap;
+	text-indent:15px;
+	color:#999;
+	font-weight:normal;
+	font-size:11px;
+	line-height:10px;U
+}
+
+#rezgo #calendar #legend_memo { /* for extra memo insertion */
+ 	display:none;
+	height:auto;
+}
+
+#rezgo #map {
+	min-height:300px;
+}
+
+#rezgo #map .item {
+	width:190px; 
+	margin:10px auto;
+	padding:10px;
+	background:#ccc;
+}
+
+#rezgo #map .header {
+	background:url(images/bg_right_header.png) -2px 0 no-repeat;
+	height:36px;
+	width:274px;
+}
+
+/* Detail page calendar styles */
+#rezgo #calendar .item {
+	margin:10px 30px;
+	position:absolute;
+	width:220px;
+	background:url(images/bg_calendar.png) repeat-x scroll 0 0 transparent;
+	-moz-border-radius: 5px; 
+	-webkit-border-radius: 5px;
+	padding:5px;
+}
+
+#rezgo #calendar .header {
+	background:url(images/bg_right_header.png) -2px 0 no-repeat;
+	height:36px;
+	width:274px;
+}
+
+#rezgo #calendar_container {
+	margin:auto;
+	font-size:12px;
+	border-collapse:separate;
+	vertical-align:middle;
+	position:relative;
+	overflow:visible;
+	width:auto;
+}
+
+#rezgo #calendar_container tr td {
+	border:0;
+	padding:0;
+}
+
+#rezgo #calendar_container.calendar_load {
+	height:200px;
+	border:none;
+}
+
+#rezgo #calendar_container #prev_button {
+	height:16px;
+	width:16px;
+	background-image:url(images/calendar_prev.png);
+	background-repeat:no-repeat;
+	background-position:center; 
+	cursor:hand;
+	cursor:pointer;
+}
+
+#rezgo #calendar_container #next_button {
+	height:16px;
+	width:16px;
+	background-image:url(images/calendar_next.png);
+	background-repeat:no-repeat;
+	background-position:center; 
+	cursor:hand;
+	cursor:pointer;
+}
+
+#rezgo #calendar_container #date_selection select {
+	font-weight:normal;
+	font-size:12px;
+	color:#333;
+	margin:0;
+}
+
+#rezgo #calendar_container .daysofweek {
+	width:24px;
+	height:24px;
+	font-weight:bold;
+	color:#ddd;
+	vertical-align:middle;
+}
+
+#rezgo #calendar_container .day {
+	width:28px;
+	height:25px;
+	font-weight:bold;
+	vertical-align:middle;
+}
+
+#rezgo #calendar_container .leads {
+	background:#EEEEEE;
+	color:#CCCCCC;
+	vertical-align:middle;
+	/*padding:0px 6px 0px 6px;*/
+}
+
+#rezgo #calendar_container .available {
+	background:#B5CBDD;
+	vertical-align:middle;
+	/*padding:0px 3px 0px 3px;*/
+}
+
+#rezgo #calendar_container .full {
+	background:#ECAB5D;
+	vertical-align:middle;
+}
+
+#rezgo #calendar_container .unavailable {
+	background:#DDDDDD;
+	color:#FFFFFF;
+	vertical-align:middle;
+	/*padding:0px 6px 0px 6px;*/
+}
+
+#rezgo #calendar_container .day a {
+	color:#666;
+	text-decoration:none;/*
+	padding:3px;*/
+	cursor:hand;
+	cursor:pointer;
+	display:block;
+	/*width:28px;*/
+}
+
+#rezgo #calendar_container .day a:hover {
+	color:#990000;
+	text-decoration:none;
+	cursor:hand;
+	cursor:pointer;
+}
+
+/* sticky note on the calendar */
+#calendar_marker {
+	background:url(images/calendar_msg_bubble.png) 0 0 no-repeat;
+	height:167px;
+	width:170px;
+	left:-115px;
+	bottom:-60px;
+	position:relative;
+	z-index:1000;
+	cursor:pointer;
+}
+
+/* Date search result box and calendar search result popup */
+/* searched item on the tour list page */
+#rezgo #date_search_result {
+	background:#627C92;
+	-moz-border-radius: 5px;
+	-webkit-border-radius: 5px;
+	margin:10px 10px 20px 0;
+	float:left;
+	width:70%;
+	overflow:hidden;	
+}
+
+#rezgo #date_search_result span.avail_option {
+	font-size:14px;
+	font-weight:bold;
+	color:#fff;
+	background:url(images/arrow_red_angle_down.png) no-repeat 5px 5px;
+	height:25px;
+	display:block;
+	line-height:30px;
+	text-indent:30px;
+}
+
+#rezgo #date_search_result .searched_item {
+	background:#fff;
+	-moz-border-radius: 5px;
+	-webkit-border-radius: 5px;
+	margin:5px;
+	overflow:hidden;
+	padding:5px 0;
+}
+
+#rezgo #date_search_result .searched_item .search_date {
+	border-bottom:1px solid #999;
+	overflow:hidden;
+}
+
+#rezgo #date_search_result .searched_item .search_date:hover {
+	display:block;
+	background:#ccc;
+}
+
+#rezgo #date_search_result .searched_item span.date_box, #rezgo #date_search_result .searched_item span.avail, #rezgo #date_search_result .searched_item span.select {
+	display:block;
+	color:#464C54;
+	font-weight:bold;
+	font-size:12px;
+	font-family:Verdana, Arial, Helvetica, sans-serif;
+	text-align:left;
+	width:50%;
+	float:left;
+	line-height:20px;
+}
+
+#rezgo #date_search_result .searched_item span.date_box {
+	text-indent:5px;
+}
+
+#rezgo #date_search_result .searched_item span.avail {
+	width:30%;
+	font-weight:normal;
+}
+
+#rezgo #date_search_result .searched_item span.select {
+	width:20%;
+	clear:right;
+}
+
+#rezgo #date_search_result a.day_select {
+	display:block;
+	overflow:hidden;
+	text-decoration:none;
+}
+
+#rezgo #date_search_result a.day_select:hover {
+	background:#ccc;
+	text-decoration:none;
+	color:#990000;
+}
+
+#rezgo #date_search_result .searched_item span.date_box:hover, #rezgo #date_search_result .searched_item span.avail:hover, #rezgo #date_search_result .searched_item span.select:hover {
+	color:#990000;
+	text-decoration:none;
+}
+
+#rezgo #date_search_result .overlay, #rezgo #calendar_container .overlay {
+	display:none;
+	background:url(images/white.png) no-repeat;
+	/*  
+		width after the growing animation finishes
+		height is automatically calculated
+	*/
+	width:530px;
+	padding:35px;	
+	font-size:11px;
+	z-index:1000;
+}
+
+/* default close button positioned on upper right corner */
+#rezgo #date_search_result .overlay .close, #rezgo #calendar_container .overlay .close {
+	background:url(images/close.png) no-repeat;
+	position:absolute; 
+	right:14px; 
+	top:8px;
+	cursor:pointer;
+	height:35px;
+	width:35px;/*
+	z-index:10010;*/
+}
+
+#rezgo #date_search_result .overlay .close a, #rezgo #calendar_container .overlay .close a {
+}
+
+#rezgo #date_search_result .overlay .close:hover, #rezgo #calendar_container .overlay .close:hover {
+	background:url(images/close.png) no-repeat;
+	position:absolute; 
+	cursor:pointer;
+}
+
+#rezgo #date_search_result span.unavail_option {
+	display:block;
+	color:#fff;
+	background:url(images/arrow_red_cross.png) no-repeat 5px 5px;
+	text-indent:30px;
+	line-height:30px;
+	font-weight:bold;
+}
+
+/* tour list lightbox style */
+#rezgo #rezgo_popup_book {
+	overflow:hidden;
+	height:360px;
+	position:relative;/*
+	z-index:100000;*/
+}
+
+#rezgo #rezgo_popup_book .header {
+	width:90%;
+	margin:0 auto 5px;
+	text-align:center;
+	padding:5px;
+	background:none;
+	color:#464C54;
+	height:auto;
+}
+
+#rezgo #rezgo_popup_book .wrp {
+	width:90%;
+	margin:5px auto;
+	text-align:center;
+	padding:5px;
+	overflow:hidden;
+}
+
+#rezgo #rezgo_popup_book label {
+	font-size:12px;
+	color:#464C54;
+	line-height:13px;
+	font-family:Verdana, Arial, Helvetica, sans-serif;
+	font-weight:bold;
+}
+
+#rezgo #rezgo_popup_book label.red{
+	font-size:12px;
+	color:#CC0000;
+	line-height:16px;
+	font-family:Verdana, Arial, Helvetica, sans-serif;
+}
+
+#rezgo #rezgo_popup_book h1.popup_title {
+	font-size:18px;
+	font-weight:normal;
+	color:#464C54;
+	line-height:22px;
+	font-family:Verdana, Arial, Helvetica, sans-serif;
+	margin:0;
+	background:none;
+	height:auto;
+	margin:0;
+	padding:0;
+	text-indent:0;
+	text-shadow:none;
+	width:100%;
+}
+
+#rezgo #rezgo_popup_book h2.popup_title {
+	font-size:16px;
+	color:#464C54;
+	line-height:20px;
+	font-family:Verdana, Arial, Helvetica, sans-serif;
+	margin:0;
+}
+
+#rezgo #rezgo_popup_book .popup_title {
+	font-size:15px;
+	color:#CC0000;
+	line-height:20px;
+	font-family:Verdana, Arial, Helvetica, sans-serif;
+	margin:0;
+	background:none;
+	padding:0;
+	min-height:0;
+	width:100%;
+}
+
+#rezgo #rezgo_popup_book .title_01, #rezgo #rezgo_popup_book .title_02, #rezgo #rezgo_popup_book .title_03, #rezgo #rezgo_popup_book .result_01, #rezgo #rezgo_popup_book .result_02, #rezgo #rezgo_popup_book .result_03{
+	background:#677988;
+	color:#fff;
+	font-size:11px;
+	font-weight:bold;
+	font-family:Verdana, Arial, Helvetica, sans-serif;
+	text-align:center;
+	float:left;
+	margin:3px 3px 0px 0;
+	line-height:22px;
+	min-height:25px;
+}
+
+#rezgo #rezgo_popup_book .result_01 {
+	text-align:left;
+}
+
+#rezgo #rezgo_popup_book .result_02 {
+	text-align:center;
+}
+
+#rezgo #rezgo_popup_book .modal_titles {
+	overflow:hidden;
+}
+
+#rezgo #rezgo_popup_book .title_01, #rezgo #rezgo_popup_book .result_01 {
+	width:55%;
+	padding-left:5px;
+}
+
+#rezgo #rezgo_popup_book .title_02,  #rezgo #rezgo_popup_book .result_02  {
+	width:18%;
+}
+
+#rezgo #rezgo_popup_book .title_03, #rezgo #rezgo_popup_book .result_03 {
+	width:22%;
+}
+
+#rezgo #rezgo_popup_book .result_01, #rezgo #rezgo_popup_book .result_02, #rezgo #rezgo_popup_book .result_03{
+	background:#ccc;
+	color:#464C54;
+}
+
+#rezgo #rezgo_popup_book .result_03 span {
+	display:block;
+}
+
+#rezgo #rezgo_popup_book .result_03 a {
+	background:url(images/rezgo_buttons.png) no-repeat 5px -210px;
+	color:#fff;
+	text-decoration:none;
+	display:block;
+	font-family:Verdana,Arial,Helvetica,sans-serif;
+	font-size:11px;
+	font-weight:bold;
+	text-align:center;
+	padding:0;
+	margin:0;
+	min-height:25px;
+	text-indent:15px;
+	width:auto;
+}
+
+#rezgo #rezgo_popup_book .result_03 a:hover {
+	background:url(images/rezgo_buttons.png) no-repeat -99px -210px;
+	text-decoration:none;
+	color:#f6a11c;
+}
+
+#rezgo #rezgo_popup_book .paging {
+	color:#464C54;
+	font-weight:bold;
+	font-size:13px;
+	font-family:Verdana, Arial, Helvetica, sans-serif;
+	display:block;
+	background:none;
+	position:absolute;
+	bottom:10px;
+	left:190px;
+}
+
+#rezgo #rezgo_popup_book .paging a, #rezgo #rezgo_popup_book .paging a:hover {
+	display:inline;
+}
+
+#rezgo #rezgo_popup_book .paging img{
+	vertical-align:middle;
+	margin:0 10px;
+}
+
+
+/* checkout page header/breadcrumb */
+
+#rezgo #panel_full .header  {
+	background:#8da9b0;
+	height:74px;
+	width:102%;
+	left:-8px;
+	position:relative;
+	margin:15px 0 0 0;
+	overflow:hidden;
+}
+
+#rezgo #panel_full .header_shadow {
+	width:101.5%;
+	background:url(images/header_shadow.png) 0 bottom repeat-x;
+	left:-6.5px;
+	position:relative;
+	height:5px;
+	z-index:1;
+}
+
+#rezgo #panel_full .header h1 {
+	color:#fff;
+	text-indent:30px;
+	text-decoration:none;
+	font-family:"Myriad Pro","Trebuchet MS","Helvetica Neue",Helvetica,Arial,Sans-Serif;
+	float:left;
+	line-height:80px;
+}
+	
+#rezgo #panel_full .header h2 {
+	color:#fff;
+	text-decoration:none;
+	font-family:"Myriad Pro","Trebuchet MS","Helvetica Neue",Helvetica,Arial,Sans-Serif;
+	float:left;
+	text-indent:40px;
+}
+	
+#rezgo #panel_full .header h2.on {
+	font-size:30px;
+	line-height:80px;
+	margin:0;
+	color:#fff;
+}
+	
+#rezgo #panel_full .header h2.off {
+	font-size:20px;
+	opacity:0.6;
+	filter:alpha(opacity=60);
+	line-height:80px;
+	margin:0;
+	cursor:hand; 
+	cursor:pointer;
+	color:#fff;
+}
+
+/* rezgo booking confirmation message */
+#rezgo #panel_full .message {
+	width:70%;
+	margin:15px auto 5px;
+	background:#8da9b0;
+	padding:15px;
+	font-size:14px;
+	font-weight:bold;
+	text-align:center;
+	color:#FBF9E7;
+	position:relative;
+	top:-5px;
+	opacity:0.8;
+	filter:alpha(opacity=80);
+}
+
+/* -- booking section styles -- */
+
+#rezgo .terms, #rezgo .customer_service {
+	width:90%;
+	border:10px solid #FAA248;
+	margin:10px auto;
+	overflow:hidden;
+	background:#fff;
+}
+
+#rezgo .tour_info, #rezgo .booking_info, #rezgo .payment_info, #rezgo .passenger_info, #rezgo .billing_info {
+	width:90%;
+	border:10px solid #ddd;
+	margin:10px auto;
+	overflow:hidden;
+	background:#fff;
+}
+
+#rezgo .tour_info h2, #rezgo .booking_info h2, #rezgo .payment_info h2, #rezgo .terms h2, #rezgo .passenger_info h2, #rezgo .billing_info h2, #rezgo .customer_service h2 {
+	display:block;
+	padding:10px;
+	margin:0;
+	background:#ccc;
+	color:#fff;
+	font-family:"Myriad Pro","Trebuchet MS","Helvetica Neue",Helvetica,Arial,Sans-Serif;
+}
+
+#rezgo .payment_info a {
+	color:#FAA248;
+	text-decoration:none;
+}
+
+#rezgo .header_print {
+	overflow:hidden;
+	background:#ccc;
+}
+
+#rezgo .header_print h2 {
+	float:left;
+}
+
+#rezgo span.print_receipt a {
+	float:right;
+	background:url(images/rezgo_buttons.png) -190px -10px no-repeat;
+	height:25px;
+	text-indent: -999px;
+    width: 80px;
+	margin:8px;
+	cursor:pointer;
+}
+
+#rezgo span.print_receipt:hover {
+	background:url(images/rezgo_buttons.png) -104px -10px no-repeat;
+}
+
+#rezgo .terms h2, #rezgo .customer_service h2  {
+	background:#FFC105;
+}
+#rezgo .tour_info fieldset, #rezgo .booking_info fieldset, #rezgo .billing_info fieldset, #rezgo .payment_info fieldset, #rezgo .terms fieldset, #rezgo .tour_receipt fieldset, #rezgo .customer_service fieldset {
+	position:relative;
+	border:none;
+	margin:10px;
+	padding:0;
+	background:#fff;
+}
+
+#rezgo .tour_info fieldset{
+margin:0;
+}
+
+#rezgo .tour_receipt fieldset {
+	background:#fff;
+}
+
+#rezgo .booking_info ol, #rezgo .payment_info ol, #rezgo .terms ol, #rezgo .passenger_info ol, #rezgo .billing_info ol, #rezgo .customer_service ol {
+	margin:0;
+	padding:0;
+	overflow:hidden;
+}
+
+#rezgo .tour_info ol.tour_receipt, #rezgo .tour_info ol.price  {
+	margin:0;
+	padding:0;
+	overflow:hidden;
+}
+
+#rezgo .booking_info li, #rezgo .payment_info li, #rezgo .passenger_info li, #rezgo .billing_info li, #rezgo .tour_info li {
+	list-style:none;
+	overflow:hidden;
+	margin:5px 0 0 0;
+	font-size:14px;
+}
+
+#rezgo .tour_info li {
+	margin:0;
+	padding:0;
+}
+
+#rezgo .tour_info ol.tour_receipt li.info {
+	width:100%; 
+	border-bottom:1px dotted #999;
+	background:#ddd;
+	margin:0;
+	padding:0;
+}
+
+#rezgo .tour_info ol.tour_receipt li.info * {
+	font-size:16px;
+	line-height:20px;
+}
+
+#rezgo .tour_info ol.tour_receipt li.info li {
+	list-style:circle inside;
+	overflow:visible;
+}
+
+#rezgo .tour_info ol.price li.info {
+	width:100%; 
+	border-bottom:1px dotted #999;
+	background:#fff;
+	overflow:hidden;
+	line-height:0;
+	display:inline;
+}
+
+#rezgo .tour_info ol.tour_receipt li label {
+	color:#666666;
+	display:block;
+	float:left;
+	margin:0;
+	padding:5px;
+	text-align:right;
+	width:30%;
+	font-size:16px;
+	font-weight:bold;
+	line-height:20px;
+	min-height:20px;
+}
+
+#rezgo .tour_info ol.tour_receipt li span {
+	background:none repeat scroll 0 0 #FFFFFF;
+	display:block;
+	float:left;
+	padding:5px;
+	width:67.3%;
+	font-size:16px;
+	line-height:20px;
+	min-height:20px; 
+}
+
+#rezgo .tour_info ol.tour_receipt li span p {
+	font-size:16px;
+	margin:0;
+	padding:0;
+}
+
+.tour_info ol.price {
+}
+
+#rezgo .tour_info ol.price li {
+	float:left; 
+	background:#fff;
+	overflow:hidden;
+	border:none;
+}
+
+#rezgo .tour_info ol.price li label {
+	display:block; 
+	float:left;
+	margin:0;
+}
+
+#rezgo .tour_info ol.price li span {
+	background:none repeat scroll 0 0 #FFFFFF;
+	display:block;
+	padding:5px;
+	float:left;
+	font-size:16px;
+	line-height:20px;
+}
+
+#rezgo .tour_info ol.price li span.discount {
+	color:#990000;
+	display:block;
+	text-decoration:line-through;
+	white-space:nowrap;
+	width:96%;
+	background:none;
+}
+
+#rezgo .tour_info ol.price .type {
+	width:30%;
+	border-right:1px dotted #999;
+}
+
+#rezgo .tour_info ol.price .qty {
+	width:10%;
+	border-right:1px dotted #999;
+}
+
+#rezgo .tour_info ol.price .cost {
+	width:25%;
+	border-right:1px dotted #999;
+}
+
+#rezgo .tour_info ol.price .line_total {
+	width:26%;
+}
+
+#rezgo .tour_info ol.price .total {
+	width:27%;
+}
+
+#rezgo .tour_info ol.price span {
+	display:block; 
+	float:left;
+	background:#fff;
+	padding-right:5px;
+	text-align:right;
+}
+
+#rezgo .tour_info ol.price label.subtotal, #rezgo .tour_info ol.price label.tax_fees, #rezgo .tour_info ol.price label.extra, #rezgo .tour_info ol.price label.total, #rezgo .tour_info ol.price label.deposit, #rezgo .tour_info ol.price label.paid, #rezgo .tour_info ol.price label.owing {
+	background:#ccc;
+	width:69%;
+	padding:5px;
+	border-right:1px dotted #999;
+}
+
+#rezgo .tour_info ol.price label.total, #rezgo .tour_info ol.price label.owing {
+	color:#333;
+}
+
+#rezgo .tour_info ol.price span.subtotal, #rezgo .tour_info ol.price span.tax_fees, #rezgo .tour_info ol.price span.extra, #rezgo .tour_info ol.price span.total, #rezgo .tour_info ol.price span.deposit, #rezgo .tour_info ol.price span.paid, #rezgo .tour_info ol.price span.owing {
+	width:26%;
+}
+
+#rezgo .tour_info ol.price span.total, #rezgo .tour_info ol.price span.owing {
+	font-weight:bold;
+	font-size:18px;
+	color:#333;
+}
+
+#rezgo .tour_info ol.tour_receipt li.last {
+	border-bottom:none;
+}
+
+/* -- style for booking steps --*/
+#rezgo #errors {
+	background-color:#990000;
+	border:4px solid #ccc;
+	color:#fff;
+	width:300px;
+	padding:10px;
+	margin:20px auto 0 auto;
+	display:none;
+	-moz-border-radius:5px;
+	-webkit-border-radius:5px;			
+}
+
+#rezgo .invalid { /* input color for required field not filled */
+	background:#f3e9d3;
+}
+
+#rezgo_error.error { /* required error bubble */
+	height:21px;
+	font-size:12px;
+	font-weight:bold;
+	color:#000;	
+	background:url(images/bg_error_msg01.png) 0 0 no-repeat;	
+}
+
+#rezgo_error.error em {
+	display:block;	
+}
+
+#rezgo_error.error span {
+	color:#700000;
+	background:url(images/bg_error_msg02.png) right 0 no-repeat;
+	display:block;
+	padding:0 10px 0 5px;	
+	margin-left:3px;
+	height:32px;
+}
+
+#rezgo .booking_info li.half, #rezgo .payment_info li.half, #rezgo .billing_info li.half {
+	list-style:none;
+	overflow:hidden;
+	width:49%;
+	float:left;
+	font-size:14px;
+}
+
+#rezgo .booking_info li.half label, #rezgo .billing_info li.half label {
+	width:35%;
+	color:#666666;
+	font-weight:bold;
+	float:left;
+	line-height:30px;
+}
+
+#rezgo .booking_info li.half input, #rezgo .billing_info li.half input {
+	width:60%;
+	height:20px;
+	margin-top:3px;
+}
+
+#rezgo .payment_info li.hidden {
+	display:none;
+}
+
+#rezgo .terms li {
+	list-style:none;
+	margin:10px 0;
+	color:#FAA248;
+	font-size:16px;
+	font-weight:bold;
+	line-height:25px;
+}
+
+#rezgo .terms li a, #rezgo .customer_service li a {
+	text-decoration:underline;
+	color: #FA8043;
+}
+
+#rezgo .customer_service li {
+	list-style:none;
+	margin:10px 0;
+	color:#FAA248;
+	font-size:16px;
+	font-weight:bold;
+	line-height:25px;
+	border-bottom:2px dotted #FAA248;
+}
+
+#rezgo .terms li a:hover {
+	color:#FAA248;
+}
+
+#rezgo .terms li.payment_terms, #rezgo .customer_service li.payment_terms {
+	color:#666;
+	font-size:12px;
+	padding-left:20px;
+	font-weight:normal;
+	border-bottom:none;
+	line-height:15px;
+}
+
+#rezgo .terms li.payment_terms a, #rezgo .customer_service li.payment_terms a {
+	border: none;
+    font-size: 14px;
+    font-weight: normal;
+    margin: 0;
+}
+
+#rezgo .customer_service li.receipt_contact {
+	color:#666;
+	font-size:14px;
+	padding-left:20px;
+	border-bottom:none;
+	line-height:17px;
+}
+
+#rezgo .terms h2.title {
+	display:block;
+	padding:10px;
+	margin:0;
+	background:#FFC105;
+	color:#fff;
+	font-family:"Myriad Pro","Trebuchet MS","Helvetica Neue",Helvetica,Arial,Sans-Serif;
+}
+
+#rezgo .payment_info label.title {
+	display:block;
+	color:#666;
+	font-size:18px;
+	font-weight:bold;
+	border-bottom:1px dotted #999;
+	margin-bottom:10px;
+	width:99%;
+}
+
+#rezgo .booking_info label.left, #rezgo .billing_info label.left {
+	float:left;
+	width:20%;
+	font-weight:bold;
+	color:#666;
+	font-size:14px;
+}
+
+#rezgo .payment_info label.left {
+	float:left;
+	width:30%;
+	font-weight:bold;
+	color:#666;
+}
+
+#rezgo .passenger_info label {
+	font-weight:bold;
+	color:#666;
+}
+
+#rezgo .passenger_info li span {
+	color:#FAA248;
+	margin-left:4px;
+	font-weight:bold;
+}
+
+#rezgo .passenger_info ol li.title {
+	background:#ccc;
+	margin:0;
+}
+
+#rezgo .passenger_info ol li.title h3 {
+	color:#999;
+	display:block;
+	font-family:"Myriad Pro","Trebuchet MS","Helvetica Neue",Helvetica,Arial,Sans-Serif;
+	margin:0;
+	padding:10px;
+}
+
+#rezgo .passenger_info li {
+	margin:10px;
+	border-bottom: 1px dotted #CCCCCC;
+}
+
+#rezgo .payment_info img {
+	margin:5px 0 0 10px;
+}
+
+#rezgo .booking_info input.checkbox  {
+	float:left;
+	width:15px;
+	margin-right:10px;
+}
+
+#rezgo .booking_info label, #rezgo .billing_info label {
+	font-size:14px;
+	color:#000;
+}
+
+#rezgo .booking_info span, #rezgo .billing_info span {
+	display:block;
+	font-size:12px;
+	color:#999999;
+}
+
+#rezgo .booking_info span.checkbox {
+	margin:0 0 0 30px;
+}
+
+#rezgo .billing_info select {
+	margin:5px 0 0 0;
+	font-size:14px;
+	width:62%;
+	padding:1px;
+}
+
+#rezgo .booking_info select, #rezgo .payment_info select {
+	margin:5px 0 0 0;
+	font-size:14px;
+	padding:1px;
+}
+
+#rezgo p.notation {
+	margin:30px 0 0 30px;
+	font-size:13px;
+	color:#666;
+	font-weight:bold;
+}
+	
+#rezgo .booking_info .hr {
+	border-bottom:1px dotted #CCCCCC;
+	display:block;
+	height:5px;
+	margin:5px 0;
+	clear:both;
+}
+
+#rezgo .paypal_button {
+	text-align:center;
+}
+
+#rezgo .paypal_button input {
+	border:none;
+}
+
+
+/*style for contact us */
+
+#contact_us {
+	margin:10px 20px;
+	overflow:hidden;
+}
+
+#rezgo #contact_us .company_info {
+	font-size:14px;
+	margin-bottom:20px;
+	border:5px solid #CCCCCC;
+	padding:10px;
+	-moz-border-radius: 10px;
+	-webkit-border-radius:10px 10px 10px 10px;
+	-khtml-border-radius:10px;
+	border-radius: 10px;
+}
+
+#rezgo #contact_us .company_info .co_name {
+	font-weight:bold;
+	font-size:15px;
+	line-height:22px;
+	color:#666;
+}
+
+#rezgo #contact_us .contact_instruction {
+	font-size:14px;
+	color:#666;
+	margin-bottom:10px;
+}
+
+#rezgo #contact_us .contact_form {
+}
+
+#rezgo #contact_us .contact_form ul {
+	margin:0;
+	padding:0;
+}
+
+#rezgo #contact_us .contact_form ul li {
+	list-style:none;
+	margin:0;
+	padding:5px 0;
+	overflow:hidden;
+}
+
+#rezgo #contact_us .contact_form label {
+	width:130px;
+	font-weight:bold;
+	font-size:14px;
+	display:inline-block;
+	color:#666;
+	vertical-align: top;
+}
+
+#rezgo #contact_us .contact_form .submit {
+	margin-right:0;
+	float:right;
+}
+
+#rezgo #contact_us .contact_msg {
+	color:#990000;
+	font-size:13px;
+}
+#rezgo #contact_us #captcha {
+	float:left;
+	margin-left:120px;
+}
+#rezgo #contact_us .captcha_error {
+}
+
+.recaptchatable #recaptcha_response_field {
+}
+/********** rezgo footer **************/
+#rezgo .social_media {
+	float:right;
+	margin:0 20px;
+	overflow:hidden;
+	padding:10px;
+}
+
+.social_media #social_url	{
+}	
+.social_media #social_facebook	{
+}			
+.social_media #social_twitter	{
+}			
+.social_media #social_tripit	{
+}	
+.social_media #social_travelmuse	{
+}	
+.social_media #social_duffelup	{
+}	
+
+#rezgo #short_url_box {
+	position:absolute;
+}
+
+#rezgo #short_url {
+	background:url(images/bg_short_url.png) no-repeat 0 0;
+	height:70px;
+	position:relative;
+	left:223px;
+	top:40px;
+	width:260px;
+}
+
+#rezgo #short_url span {
+	color:#DDDDDD;
+	padding-left:10px;
+	position:relative;
+	top:30px;
+}
+
+#rezgo #short_url input {
+	position:relative;
+	top:30px;
+	width:160px;
+}
+
+#rezgo #rezgo_footer {
+	overflow:hidden;
+}
+
+#rezgo .secure_seal {/* secure seal @@@ don't remove */
+	float:left;
+	margin:0 30px;
+}
+
+#rezgo .secure_seal .hidden {/* secure seal @@@ don't remove */
+	display:none;
+}
+
+#rezgo #refid {/*hidden element @@@ refid DON"T REMOVE */
+	text-align:right;
+	margin:0 17px 0 0;
+	color:#666;
+	font-size:12px;
+	font-weight:bold;
+	text-shadow:0 1px #FFFFFF;
+}
+
+#rezgo_logo {/*rezgo logo @@@ don't remove */
+	height:26px;
+	display:block;
+	text-align:right;
+	margin:30px 15px 3px 3px;
+}
+
+#rezgo_logo a {/*rezgo logo @@@ don't remove */
+	color:#666;
+	font-family:Verdana,Arial,Helvetica,sans-serif;
+	font-size:10px;
+	text-align:right;
+	text-decoration:none;
+}
+
+#rezgo_logo img {
+	display:inline;
+	position:relative;
+	top:7px;
+	padding-left:3px;
+}
+
+/* not available style */
+#rezgo .not_available {
+	background:url(images/not_avail.png) 0 0 no-repeat;
+	text-indent:80px;
+	font-size:14px;
+	color:#999;
+	height:55px;
+	line-height:70px;
+	margin-top:20px;
+}
+
+/* 404 page styles */
+#rezgo #goog-wm {
+
+}
+
+#rezgo #goog-wm h3 {
+	color:#FF9900;
+}
+
+#rezgo #goog-wm ul {
+	margin:0;
+	padding:0;
+}
+
+#rezgo #goog-wm ul li.search-goog {
+	list-style:none;
+	color:#999;
+	font-size:16px;
+	font-weight:bold;
+	line-height:25px;
+}
+#rezgo #goog-wm ul li.search-goog b {
+	font-size:14px;
+	color:#666666;
+}
+
+#rezgo #goog-wm-qt {
+	width:300px;
+	border:5px solid #ccc;
+	padding:3px;
+}
+
+#rezgo #goog-wm-sb {
+	padding:3px;
+	margin:0 10px;
+	
+	background:url(images/btn_bg03.png) repeat-x scroll center center #ddd;
+	color:#fff;
+	font-weight:bold;
+	font-size:14px;
+	text-align:center;
+	border:5px solid #ccc;
+	-moz-border-radius:3px 3px 3px 3px;
+	-webkit-border-radius:3px 3px 3px 3px;
+	-khtml-border-radius:3px;
+	border-radius: 3px;
+	cursor:pointer;
+}
+
+/* review banner @@@ will be removed later */
+.review_banner a {
+	background:url(images/banner_preview_mode.png) 0 0 no-repeat;
+	position:fixed;
+	top:0;
+	right:0;
+	width:220px;
+	height:200px;
+	text-indent:-5000px;
+	cursor:pointer;
+	z-index:10000;
+}
+
+
+/* terms popup */
+#terms_popup {
+	font-family:Arial,"Lucida Sans","Lucida Grande",Verdana,sans-serif;
+	font-size:14px;
+	color:#000;
+	border:10px solid #DDDDDD;
+	margin:10px auto;
+	overflow:auto;
+	width:90%;
+}
+#terms_popup div {
+	padding:10px;
+}
+#terms_popup h1 {
+	background:none repeat scroll 0 0 #CCCCCC;
+	color:#FFFFFF;
+	display:block;
+	font-family:"Myriad Pro","Trebuchet MS","Helvetica Neue",Helvetica,Arial,Sans-Serif;
+	font-size:18px;
+	line-height:22px;
+	padding:10px;
+	margin:0;
+}
+/* image gallery styles */
+
+#carousel {
+}
+
+/*
+	root element for the scrollable.
+	when scrolling occurs this element stays still.
+*/
+.scrollable {
+	/* required settings */
+	display:block;
+	position:relative;
+	overflow:hidden;
+	width: 235px;
+	height:60px;
+	margin-top:10px;
+	float:left;	/* this makes it possible to add next button beside scrollable */
+	z-index:0;
+	/* custom decorations */
+
+}
+
+/*
+	root element for scrollable items. Must be absolutely positioned
+	and it should have a extremely large width to accomodate scrollable items.
+	it's enough that you set the width and height for the root element and
+	not for this element.
+*/
+.scrollable .items {
+	/* this cannot be too large */
+	width:20000em;
+	position:absolute;
+	clear:both;
+}
+
+.items div {
+	float:left;
+	width:420px;
+}
+
+/* single scrollable item */
+.scrollable img {
+	float:left;
+	/*background-color:#fff;*/
+	padding:2px;	
+	width:55px; 
+	height:55px;
+}
+
+.scrollable a {
+	padding-right:2px;
+}
+
+/* prev, next, prevPage and nextPage buttons */
+a.browse {
+	background:url(images/carousel_arrow.png) no-repeat;
+	display:block;
+	width:20px;
+	height:38px;
+	float:left;
+	margin:20px 2px;
+	cursor:pointer;
+	font-size:1px;
+}
+
+/* right */
+a.right { 
+	background-position: -20px -37px; 
+	clear:right; 
+	margin-right: 6px; 
+	margin-left:0px;
+}
+a.right:hover { background-position:-20px -1px; }
+a.right:active { background-position:-20px -37px; } 
+
+
+/* left */
+a.left { margin-left: 6px; background-position:0px -37px; } 
+a.left:hover { background-position:0px -1px; }
+a.left:active { background-position:0px -37px; }
+
+/* up and down */
+
+/* up */
+a.up:hover { background-position:-30px 0; }
+a.up:active { background-position:-60px 0; }
+
+/* down */
+a.down { background-position: 0 -30px; }
+a.down:hover { background-position:-30px -30px; }
+a.down:active { background-position:-60px -30px; } 
+
+
+/* disabled navigational button */
+a.disabled {
+	visibility:hidden !important;		
+} 	
+
+/*modal box on booking page */
+#rezgo .modal {
+	 background-color:#fff;
+	 display:none;
+	 width:350px;
+	 padding:15px;
+	 text-align:left;
+	 border:10px solid #999;
+	 font-size:16px;
+
+	 opacity:0.8;
+	 -moz-border-radius:10px;
+	 -webkit-border-radius:10px;
+	 -moz-box-shadow: 0 0 50px #ccc;
+	 -webkit-box-shadow: 0 0 50px #ccc;
+	 z-index:1000;
+}
+
+#rezgo .modal h2 {
+	font-size:20px;
+	text-align:center;
+}
+
+#rezgo .modal .close {
+	background:#EA8125;
+	border:3px solid #999;
+	font-size:14px;
+	padding:2px 5px;
+	color:#fff;
+	float:right;
+}
+
+#rezgo .modal .close:hover {
+	background:#999;
+	border:3px solid #EA8125;
+}
+
+#rezgo .error_box {
+	position:relative;
+	z-index:100;
+}
+
+#rezgo .error_box .error_text {
+	position:absolute;
+	top:10px;
+	left:80px;
+	width:220px;
+	border:2px solid #B99100;
+	background: #F3BE00;
+
+	padding:5px;
+	z-index:1000;
+	
+	opacity:0.9;
+	-moz-border-radius:5px;
+	-webkit-border-radius:5px;
+	-moz-box-shadow: 0 0 10px #ccc;
+	-webkit-box-shadow: 0 0 10px #ccc;
+
+	display:none;
+}
+
+/* ------------ booking summary page styles ---------------- */
+
+#booking_summary {
+	font-family:Arial,"Lucida Sans","Lucida Grande",Verdana,sans-serif;
+	margin:20px;
+	font-size:16px;
+}
+
+#booking_summary h1 {
+	font-size:20px;
+	text-decoration:underline;
+	color:#666;
+}
+
+#booking_summary ul {
+	margin:15px;
+	padding:0;
+}
+
+#booking_summary li {
+	list-style:none;
+	line-height:24px;
+}
+
+#booking_summary li  span{
+	color:#999;
+}

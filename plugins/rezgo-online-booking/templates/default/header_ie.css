@@ -1,0 +1,43 @@
+@charset "UTF-8";
+/* CSS Document */
+
+
+#rezgo #search_bar .promo_submit {
+	height:25px;
+}
+
+#rezgo #search_bar .promo_submit {
+	background:url(images/rezgo_buttons.png) no-repeat -1px -2px;
+}
+
+#rezgo #calendar .legend_item {
+	display:inline;
+}
+
+#rezgo #calendar_container .day {
+	height:24px;
+}
+
+#rezgo span.promocode {
+	margin-top:0;
+}
+
+#rezgo #alternate_op {
+	top:-20px;
+}
+
+#rezgo .option_contents {
+	top:-25px;
+}
+
+#rezgo .breadcrumb {
+	margin:0;
+}
+
+#rezgo #contact_us #captcha {
+	float:left;
+}
+
+/*#rezgo .tour_info ol.tour_receipt li span {
+	float:none;
+}*/

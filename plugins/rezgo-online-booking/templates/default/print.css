@@ -1,0 +1,191 @@
+@charset "UTF-8";
+/* CSS Document */
+
+* {
+	font-size:12px;
+	font-family:Helvetica, Verdana, Arial, sans-serif;
+	line-height:16px;
+}
+/*invoice print */
+#panel_full {
+	display:inline;
+	padding-bottom:5px;
+	height:auto;
+}
+
+#rezgo_logo {
+	margin:5px 15px 3px 3px;
+}
+
+#rezgo .tour_info, #rezgo .passenger_info {
+	overflow:visible;
+}
+
+#rezgo .tour_info ol.tour_receipt {
+	overflow:visible;
+}
+
+#rezgo .booking_info ol, #rezgo .payment_info ol, #rezgo .terms ol, #rezgo .passenger_info ol, #rezgo .billing_info ol {
+	overflow:visible;
+}
+
+#rezgo .tour_info h2, #rezgo .booking_info h2, #rezgo .payment_info h2, #rezgo .terms h2, #rezgo .passenger_info h2 {
+	background:#ccc;
+	color:#000;
+	border-bottom: 2px dotted #ccc;
+}
+
+#rezgo .tour_info ol.tour_receipt li.info { 
+	border-bottom:1px dotted #999;
+	background:none;
+	margin:0;
+	padding:0;
+}
+#rezgo .tour_info ol.tour_receipt li span {
+	width:67%;
+	border-left:1px dotted #999;
+}
+#rezgo .tour_info ol.tour_receipt li.last { 
+	border-bottom:none;
+}
+#rezgo .tour_info ol.tour_receipt li span.type, #rezgo .tour_info ol.tour_receipt li span.qty, #rezgo .tour_info ol.tour_receipt li span.cost, #rezgo .tour_info ol.tour_receipt li span.line_total {
+	border-left:none;
+}
+#rezgo .tour_info ol.price label.total, #rezgo .tour_info ol.price label.deposit, #rezgo .tour_info ol.price label.paid, #rezgo .tour_info ol.price label.owing {
+    color: #333333;
+	text-align:right;
+}
+#rezgo .tour_info ol.tour_receipt li.info label {
+	color:#666;
+	text-align:right;
+	font-size:14px;
+}
+#rezgo .tour_info ol.price span.subtotal, #rezgo .tour_info ol.price span.tax_fees, #rezgo .tour_info ol.price span.extra, #rezgo .tour_info ol.price span.total, #rezgo .tour_info ol.price span.deposit, #rezgo .tour_info ol.price span.paid, #rezgo .tour_info ol.price span.owing {
+	border-left:none;
+}
+#rezgo .tour_info ol.price label.subtotal, #rezgo .tour_info ol.price label.tax_fees, #rezgo .tour_info ol.price label.extra, #rezgo .tour_info ol.price label.total, #rezgo .tour_info ol.price label.deposit, #rezgo .tour_info ol.price label.paid, #rezgo .tour_info ol.price label.owing {
+	background:none;
+}
+#rezgo .tour_info li.info .discount {
+	border-left:none;
+}
+#rezgo .tour_receipt fieldset {
+border-left:1px dotted #999999;
+}
+
+#rezgo .terms {
+	border:10px solid #ddd;
+	margin:10px auto;
+}
+
+#rezgo .terms li, #rezgo .terms li a {
+	color:#666;
+}
+
+#rezgo .passenger_info label {
+	font-size:14px;
+}
+#rezgo .passenger_info li span {
+	color:#333;
+	font-size:14px;
+	font-weight:normal;
+}
+
+#rezgo .terms li.payment_terms {
+	color:#333;
+}
+
+#rezgo .terms li.receipt_contact {
+	color:#333;
+}
+
+#rezgo .passenger_info ol li.title {
+	background:none;
+	border-bottom:2px dotted #999;
+	margin: 10px;
+}
+
+#rezgo .terms h2 {
+	background:none repeat scroll 0 0 #ccc;
+}
+
+#rezgo .terms li {
+	color:#666666;
+	border-bottom:2px dotted #999;
+	line-height:20px;
+	margin:5px 0;
+}
+
+#rezgo .terms li.payment_terms {
+	border:none;
+	font-weight:normal;
+}
+
+#rezgo .passenger_info ol li.title h3 {
+color:#999999;
+display:block;
+font-family:"Myriad Pro","Trebuchet MS","Helvetica Neue",Helvetica,Arial,Sans-Serif;
+margin:5px 0;
+padding:0px;
+}
+
+/*voucher print */
+#voucher_wrp {
+	width:100%;
+	border:none;
+	background:url("images/logo_poweredby_rezgo.png") no-repeat scroll left bottom #FFFFFF;
+}
+
+
+.contents {
+	width:60%;
+}
+
+.scan {
+	width:35%;
+}
+
+.voucher_no {
+	font-size:18px;
+}
+
+h1.title {
+	font-size:20px;
+}
+
+h1.title span {
+	font-size:16px;
+}
+
+h2.tour_name {
+	font-size:16px;
+}
+
+h2.tour_name span {
+}
+
+h3.op_name {
+	font-size:16px;
+}
+
+.booked_for {
+}
+
+.booked_for label, .issued label {
+	font-size:14px;
+}
+
+
+.passenger_info label {
+	font-weight:bold;
+	margin-right:5px;
+}
+
+.pickup label, .dropoff label, .policy label, .contact label {
+	font-size:15px;
+}
+
+/*Print Invoice */
+.btn_print_both, .btn_print_one {
+	display:none;
+}

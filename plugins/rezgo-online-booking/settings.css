@@ -1,0 +1,118 @@
+@charset "utf-8";
+/* Rezgo Settings CSS */
+
+#rezgo_settings {
+	margin: 20px 0;
+}
+
+#rezgo_settings ol {
+	padding-left:15px;
+}
+
+#rezgo_settings h1 {
+	font-weight:normal;
+	font-size:24px;
+}
+
+#rezgo_settings form {
+	/*width:600px;*/
+}
+
+#rezgo_settings form dt {
+   clear:both;
+   width:200px;
+   float:left;
+}
+
+#rezgo_settings form dl {
+   padding:5px;
+   margin-left:10px;
+}
+
+#rezgo_settings form dt.note {
+	width:auto;
+	color:#21759B;
+	padding:12px 0;
+}
+
+#rezgo_settings form dd {
+   float:left;
+   width:240px;
+   margin:0 0 8px 4px;
+}
+
+#rezgo_settings .success {
+	background-color:#FF9;
+	padding:4px;
+	border:1px solid #900;
+	width:50%;
+}
+
+#rezgo_settings .field_frame {
+	-moz-border-radius:5px 5px 5px 5px;
+	-webkit-border-radius:5px 5px 5px 5px;
+	-khtml-border-radius:5px;
+	border:3px solid #ccc;
+	margin:20px 10px;
+	width:900px;
+}
+
+#rezgo_settings legend {
+	font-weight:bold;
+	font-size:15px;
+	padding: 8px 10px;
+	color:#666;
+	text-shadow:1px 1px #fff;
+	width:880px;
+	background: -webkit-gradient(linear, left top, left bottom, from(#ccc), to(#ddd));
+	background: -moz-linear-gradient(top,  #ccc,  #ddd);
+	filter: progid:DXImageTransform.Microsoft.gradient(startColorstr='#ccc', endColorstr='#ddd');
+}
+
+#rezgo_settings legend.account_info {
+}
+
+#rezgo_settings legend.recaptcha_key {
+}
+
+#rezgo_settings legend.general_settings {
+}
+
+#rezgo_settings .button-primary {
+	-moz-border-radius: 4px 4px 4px 4px;
+	font-size:16px !important;
+	padding:5px 15px;
+}
+
+#rezgo_settings .api_box {
+	margin:5px 20px 5px 450px;
+	background:#ddd;
+	padding:10px;
+	overflow:hidden;
+	
+	-moz-border-radius:5px 5px 5px 5px;
+	-webkit-border-radius:5px 5px 5px 5px;
+	-khtml-border-radius:5px;
+	width:400px;
+}
+
+#rezgo_settings .api_box .ajax_success {
+	font-weight:bold;
+	color:#21759B;
+}
+
+#rezgo_settings .api_box .ajax_error, #rezgo_settings .api_box .ajax_error_message {
+	font-weight:bold;
+	color:#990000;
+}
+
+#rezgo_settings .api_box a {
+	display:block;
+	text-indent:20px;
+}
+
+#rezgo_settings .api_box span.ajax_success_message, #rezgo_settings .api_box span.ajax_error_message, #rezgo_settings .api_box span.required_missing {
+	text-indent:20px;
+	display:block;
+	font-weight:normal;
+}
