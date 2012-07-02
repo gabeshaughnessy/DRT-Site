@@ -4,8 +4,8 @@ Donate link: http://www.rezgo.com/
 Tags: tours, activities, events, attractions, booking, reservation,
 ticketing, e-commerce, business, rezgo
 Requires at least: 3.0.0
-Tested up to: 3.1.2
-Stable tag: 1.4.5
+Tested up to: 3.3.1
+Stable tag: 1.5
 
 Integrate Rezgo, the leading tour and activity booking platform with your WordPress website.
 
@@ -59,11 +59,11 @@ phone call away:
 = Install the Rezgo Booking Plugin =
 
 1. Install the Rezgo Booking plugin in your WordPress admin by going
-to 'Plugins / Add New' and searching for *'Rezgo'* ** OR ** upload the
-`rezgo` folder to the `/wp-content/plugins/` directory
+to 'Plugins / Add New' and searching for 'Rezgo' **OR** upload the
+'rezgo-online-booking' folder to the `/wp-content/plugins/` directory
 2. Activate the Rezgo plugin through the 'Plugins' menu in WordPress
 3. Add your Rezgo CID and API KEY in the plugin settings
-4. Use the shortcode [rezgo_shortcode] in your page content
+4. Use the shortcode [rezgo_shortcode] in your page content. Advanced shortcode commands are available here at http://rezgo.me/wordpress
 5. Or place `<?php do_action('rezgo_tpl_display'); ?>` in your templates
 
 = Plugin Configuration and Settings =
@@ -74,6 +74,7 @@ to 'Plugins / Add New' and searching for *'Rezgo'* ** OR ** upload the
 want to get a ReCaptcha API Key.
 4. Create a Page and embed the Rezgo booking engine by using the
 shortcode: [rezgo_shortcode]
+5. Advanced shortcode commands are available here at http://rezgo.me/wordpress
 
 = Important Notes =
 
@@ -120,7 +121,6 @@ with your web host if you need help installing a secure certificate.
 If you do not wish to set-up a secure certificate, you can have the
 secure booking complete on your Rezgo hosted booking engine.
 
-
 == Screenshots ==
 
 1. Your tours and activities will display in a list on your default
@@ -147,6 +147,18 @@ booking engine.
 
 == Changelog ==
 
+
+= 1.5 =
+* Added support for passing variables to the shortcode.
+* Added support for new multi-tag searches.
+* Improved handling of API keys entered on settings page.
+* Switched all remaining file fetching to use configured fetch method.
+* Plugin update should no longer remove custom templates.
+* Fixed a number of display and instruction errors on settings page.
+* Fixed an issue with 'required' field alerts on some browsers.
+* Fixed a rare bug with the receipt print button.
+* Fixed a bug with smart/keyword searches failing due to bad encoding.
+* Fixed an issue with the plugin not returning it's output correctly.
 
 
 = 1.4.5 =

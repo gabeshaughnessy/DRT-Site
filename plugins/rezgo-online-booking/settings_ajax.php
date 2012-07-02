@@ -4,7 +4,12 @@
 	// send 200 response to prevent 404 ajax error (this is a wordpress quirk)
 	header("HTTP/1.1 200 OK");
 	
-	$file = file_get_contents('http://xml.rezgo.com/xml?transcode='.$_REQUEST['cid'].'&key='.$_REQUEST['key'].'&i=company');
+	function getPage($url) {
+		include('include/fetch.rezgo.php');
+		return $result;
+	}
+	
+	$file = getPage('http://xml.rezgo.com/xml?transcode='.$_REQUEST['cid'].'&key='.$_REQUEST['key'].'&i=company');
 	
 	$result = simplexml_load_string(utf8_encode($file));
 	

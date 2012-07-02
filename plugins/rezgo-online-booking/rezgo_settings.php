@@ -59,8 +59,8 @@
 			
 			if(!$_POST['rezgo_result_num']) $_POST['rezgo_result_num'] = 20;
 			
-			update_option( "rezgo_cid", $_POST['rezgo_cid'] );
-			update_option( "rezgo_api_key", $_POST['rezgo_api_key'] );
+			update_option( "rezgo_cid", trim($_POST['rezgo_cid']) );
+			update_option( "rezgo_api_key", trim($_POST['rezgo_api_key']) );
 			
 			update_option( "rezgo_captcha_pub_key", $_POST['rezgo_captcha_pub_key'] );
 			update_option( "rezgo_captcha_priv_key", $_POST['rezgo_captcha_priv_key'] );
@@ -93,12 +93,12 @@
 				<li><a href="http://www.rezgo.com">Sign-up for a Rezgo account</a>.
 				<li>Setup your inventory and configure your account on Rezgo.
 				<li>Complete the Rezgo WordPress Plugin settings below.
-				<li>Create a Post and embed the Rezgo booking engine by using the shortcode: [rezgo_shortcode].
+				<li>Create a Page and embed the Rezgo booking engine by using the shortcode: [rezgo_shortcode].
 				<li>Ensure you are using a non default permalink structure.&nbsp;'.((get_option(permalink_structure) != '') ? 'Your current structure should work!' : '');
 
 					if(get_option(permalink_structure) == '') {
 						echo '<div style="border:1px solid #9E0000; padding: 4px; padding-left:6px; padding-right:6px; background-color: #D97F7E; width:-moz-fit-content;">
-							<strong>currently using [</strong>default<strong>] which may not work correctly! <a href="http://wp3.rezgo.ca/wp-admin/options-permalink.php" style="color:#333333;">Click here</a> to change it.</strong>
+							<strong>currently using [</strong>default<strong>] which may not work correctly! <a href="/wp-admin/options-permalink.php" style="color:#333333;">Click here</a> to change it.</strong>
 						</div>';
 					}
 					
@@ -125,7 +125,7 @@
 					
 					if(cid && key) {
 						$(\'#check_values\').html(\'<img src="'.REZGO_DIR.'/load.gif">\');
-						$(\'#check_values\').load(\''.REZGO_DIR.'/settings_ajax.php?cid=\' + cid + \'&key=\' + key);
+						$(\'#check_values\').load(\''.REZGO_DIR.'/settings_ajax.php?cid=\' + cid.trim() + \'&key=\' + key.trim());
 					} else {
 						reset_check();
 					}
@@ -155,7 +155,13 @@
 					';	
 						
 						if(get_option('rezgo_cid') && get_option('rezgo_api_key')) {
-							$file = file_get_contents('http://xml.rezgo.com/xml?transcode='.get_option('rezgo_cid').'&key='.get_option('rezgo_api_key').'&i=company');
+							
+							function getPage($url) {
+								include('include/fetch.rezgo.php');
+								return $result;
+							}
+							
+							$file = getPage('http://xml.rezgo.com/xml?transcode='.get_option('rezgo_cid').'&key='.get_option('rezgo_api_key').'&i=company');
 	
 							$result = simplexml_load_string(utf8_encode($file));
 							

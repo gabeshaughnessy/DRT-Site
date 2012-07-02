@@ -25,6 +25,8 @@ function be_create_my_post_types() {
 				'singular_name' => __( 'Partner' )
 			),
 			'public' => true,
+			'has_archive' => true,
+			'rewrite' => array('slug' => 'partners'),
 			'supports' => array('title', 'editor', 'category','excerpt', 'thumbnail'),
 		)
 	);
@@ -35,6 +37,8 @@ function be_create_my_post_types() {
 				'singular_name' => __( 'Spirit' )
 			),
 			'public' => true,
+			'has_archive' => true,
+			'rewrite' => array('slug' => 'spirits'),
 			'supports' => array('title', 'editor', 'excerpt', 'thumbnail'),
 		)
 	);
@@ -45,6 +49,8 @@ function be_create_my_post_types() {
 				'singular_name' => __( 'Distillery' )
 			),
 			'public' => true,
+			'has_archive' => true,
+			'rewrite' => array('slug' => 'distilleries'),
 			'supports' => array('title', 'editor', 'excerpt', 'thumbnail'),
 		)
 	);
@@ -211,74 +217,74 @@ function be_create_metaboxes() {
 			),
 			array(
 			    'name' => 'Tuesday Open?',
-			    'desc' => 'Is the business open on mondays?',
-			    'id' => 'drt_monday_open',
+			    'desc' => 'Is the business open on tuesdays?',
+			    'id' => 'drt_tuesday_open',
 				'type' => 'checkbox'
 			),
 			array(
 				'name' => 'Tuesday Hours', 
 			    'desc' => 'When are they open?',
-				'id' => 'drt_monday_hours',
+				'id' => 'drt_tuesday_hours',
 				'type' => 'text'
 			),
 			array(
 			    'name' => 'Wednesday Open?',
-			    'desc' => 'Is the business open on mondays?',
-			    'id' => 'drt_monday_open',
+			    'desc' => 'Is the business open on wednesdays?',
+			    'id' => 'drt_wednesday_open',
 				'type' => 'checkbox'
 			),
 			array(
 				'name' => 'Wednesday Hours', 
 			    'desc' => 'When are they open?',
-				'id' => 'drt_monday_hours',
+				'id' => 'drt_wednesday_hours',
 				'type' => 'text'
 			),
 			array(
 			    'name' => 'Thursday Open?',
-			    'desc' => 'Is the business open on mondays?',
-			    'id' => 'drt_monday_open',
+			    'desc' => 'Is the business open on thursdays?',
+			    'id' => 'drt_thursday_open',
 				'type' => 'checkbox'
 			),
 			array(
 				'name' => 'Thursday Hours', 
 			    'desc' => 'When are they open?',
-				'id' => 'drt_monday_hours',
+				'id' => 'drt_thursday_hours',
 				'type' => 'text'
 			),
 			array(
 			    'name' => 'Friday Open?',
-			    'desc' => 'Is the business open on mondays?',
-			    'id' => 'drt_monday_open',
+			    'desc' => 'Is the business open on fridays?',
+			    'id' => 'drt_friday_open',
 				'type' => 'checkbox'
 			),
 			array(
 				'name' => 'Friday Hours', 
 			    'desc' => 'When are they open?',
-				'id' => 'drt_monday_hours',
+				'id' => 'drt_friday_hours',
 				'type' => 'text'
 			),
 			array(
 			    'name' => 'Saturday Open?',
-			    'desc' => 'Is the business open on mondays?',
-			    'id' => 'drt_monday_open',
+			    'desc' => 'Is the business open on saturdays?',
+			    'id' => 'drt_saturday_open',
 				'type' => 'checkbox'
 			),
 			array(
 				'name' => 'Saturday Hours', 
 			    'desc' => 'When are they open?',
-				'id' => 'drt_monday_hours',
+				'id' => 'drt_saturday_hours',
 				'type' => 'text'
 			),
 			array(
 			    'name' => 'Saturday Open?',
-			    'desc' => 'Is the business open on mondays?',
-			    'id' => 'drt_monday_open',
+			    'desc' => 'Is the business open on sundays?',
+			    'id' => 'drt_sunday_open',
 				'type' => 'checkbox'
 			),
 			array(
 				'name' => 'Saturday Hours', 
 			    'desc' => 'When are they open?',
-				'id' => 'drt_monday_hours',
+				'id' => 'drt_sunday_hours',
 				'type' => 'text'
 			),
 			

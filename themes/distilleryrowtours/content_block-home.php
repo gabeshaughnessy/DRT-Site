@@ -1,7 +1,8 @@
 <div id="content" >
 <?php
 get_template_part('pitch');
-				
+	?>
+	<div class="row tri-cta"><?php			
 				// The Call To Action Query
 				
 				$args = array(
@@ -22,6 +23,9 @@ get_template_part('pitch');
 				while ( $the_query->have_posts() ) : $the_query->the_post();
 					?>
 					<div class="cta span4">
+					<div class="matted">
+					<?php the_post_thumbnail('three-col'); ?>
+					</div>
 							<h3><?php the_title(); ?></h3>
 						
 						<div class="cta-body">

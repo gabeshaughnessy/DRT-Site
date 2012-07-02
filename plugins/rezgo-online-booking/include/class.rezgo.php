@@ -4,7 +4,7 @@
 		This is the Rezgo parser class, it handles processing for the Rezgo XML.
 		
 		VERSION:
-				1.4
+				1.5
 		
 		- Documentation and latest version
 				http://support.rezgo.com/developers/rezgo-open-source-php-parser.html
@@ -49,7 +49,7 @@
 
 	class RezgoSite {
 	
-		var $version = '1.4';
+		var $version = '1.5';
 	
 		var $xml_path;
 		
@@ -923,7 +923,9 @@
 			if(!$a || $a == $_REQUEST) {
 				if($_REQUEST['search_for']) $str .= ($_REQUEST['search_in']) ? '&t='.urlencode($_REQUEST['search_in']) : '&t=smart';	
 				if($_REQUEST['search_for']) $str .= '&q='.urlencode(stripslashes($_REQUEST['search_for']));
-				if($_REQUEST['tags']) $str .= '&f[tags]=*'.urlencode($_REQUEST['tags']).'*';
+				
+				//if($_REQUEST['tags']) $str .= '&f[tags]=*'.urlencode($_REQUEST['tags']).'*'; // this is support for the old tags
+				if($_REQUEST['tags']) $str .= '&f[tags]='.urlencode($_REQUEST['tags']); // this is support for the new tags
 				
 				if($_REQUEST['cid']) $str .= '&f[cid]='.urlencode($_REQUEST['cid']); // vendor only
 				

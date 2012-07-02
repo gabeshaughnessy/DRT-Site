@@ -14,18 +14,25 @@ License URI: http://www.gnu.org/copyleft/gpl.html
  
 Before you go all crazy editing this document, make sure to take a look at twitter Bootstrap. This theme relies heavily on the bootstrap, so look there first: http://twitter.github.com/bootstrap 
 */
+h1,h2,h3,h4,h5,h6{
+	text-transform: uppercase;
+}
+.lined {
+	border-top:  1px solid #555;
+	border-bottom:  1px solid #555;
+	margin-bottom: 8px;
+}
 #wrapper{
-	background: rgba(255,255,255,.9);
+	background: rgba(255,255,255,.9) url(images/wrapper_bg.png) repeat-y;
 	padding:  0 1%;
 }
+
 #pitch{
 	display: block;
-	height: 300px;
+	float:  left;
+	width: 100%;
 }
-#main_cta{
-	display: block;
-	height: 100px;
-}
+
 #sidebar{
 	min-height: 200px;
 }
@@ -37,4 +44,264 @@ Before you go all crazy editing this document, make sure to take a look at twitt
 	z-index: -1;
 	top: 0;
 	left: 0;
+}
+
+#title .logo a{
+	display: block;
+	text-indent: -9999%;
+	float: left;
+	width:  531px;
+	height:  38px;
+	background: transparent url(images/drt_logo.png) no-repeat;
+}
+#description h3{
+	display: block;
+	font-family: 'Dancing Script', cursive;
+	line-height: 41px;
+	vertical-align: top;
+	height: 38px;
+}
+
+.navbar {
+	position: relative;
+	float: left;
+	width: 975px;
+	margin-left: 2px;
+	font-family: 'Josefin Slab', serif;
+	text-transform: uppercase;
+	font-weight: 600;
+}
+
+.navbar li a{
+	text-shadow: 0 -1px 1px rgba(0,0,0,1), 0 1px 1px rgba(255,200,200,1);
+	font-size: 18px;
+}
+.navbar .nav li.featured  a{
+	color: #F00;
+}
+.navbar .nav li.featured  a:hover{
+	color:  #a00;
+}
+
+.navbar-search .search-query{
+	background: url(images/paper_bg.jpg) repeat;
+	border-radius: 12px;
+	-webkit-box-shadow: inset 0 1px 8px rgba(0, 0, 0, .8);
+	border-top: 1px solid #115;
+	border-bottom:  1px solid #ddd;
+}
+.navbar-search .search-query:focus {
+	background: #fff;
+	-webkit-box-shadow: inset 0 1px 4px rgba(0, 0, 0, .8);
+	border-top: 1px solid #115;
+	border-bottom:  1px solid #ddd;
+}
+.menu-tab{
+	display: block;
+	position: absolute;
+}
+.left-tab{
+	left: -23px;
+	width: 27px;
+	height: 54px;
+	background: url(images/left_menu_tab.png) no-repeat top;
+}
+.right-tab{
+	background: url(images/right_menu_tab.png) no-repeat top;
+	right: -23px;
+	width: 27px;
+	height: 54px;
+}
+
+
+.navbar-inner {
+	height: 37px;
+	background: url(images/menu_bg.png) repeat-x;
+	border-radius: 0;
+	box-shadow: 0px 2px 4px rgba(0,0,0,.5);
+}
+
+.pitch-content{
+	display: block;
+	box-shadow: inset 0 0 8px rgba(0,0,0,.5);
+	float: left;
+}
+#main-cta-container{
+	clear: both;
+	float: left;
+	margin-bottom: 10px;
+}
+#main_cta{
+	display: block;
+	height: 59px;
+	background: url(images/cta_bg.png) repeat-x;
+	border-radius: 0;
+	box-shadow: 0px 2px 4px rgba(0, 0, 0, .5);
+	float: left;
+	width: 970px;
+	margin-left: -15px; 
+	margin-bottom: 15px;
+		position: relative;
+}
+
+.cta_btn {
+display: block;
+background: url(images/cta_btn_bg.png) no-repeat;
+width: 281px;
+height: 33px;
+text-indent: 0;
+position: relative;
+top: -10px;
+text-align: center;
+padding-top: 18px;
+font-family: 'Josefin Slab';
+font-weight: bold;
+font-size: 24px;
+text-shadow: 0 -1px 0px rgba(0, 0, 0, .5), 0 1px 2px rgba(255, 255, 255,0.2);
+}
+#main_cta .cta{
+	position: relative;
+	margin: 15px 0 0;
+}
+#main_cta h3 {
+	color: #DDD;
+	text-shadow: 0 1px -1px rgba(0, 0, 0, 1), 0 1px 1px rgba(255, 255, 255,1);
+	font-size: 24px;
+}
+#main_cta .left-tab{
+	left: -26px;
+	width: 28px;
+	height: 76px;
+	background: url(images/cta_left_tab.png) no-repeat top;
+}
+#main_cta .right-tab{
+	background: url(images/cta_right_tab.png) no-repeat top;
+	right: -26px;
+	width: 28px;
+	height: 76px;
+}
+#main-cta-container .cta-content {
+	width: 525px;
+	float: left;
+	font-size: 1.5em;
+	line-height: 1.5em;
+	margin-right: 15px;
+}
+#main-cta-container .cta-content h3 {
+	font-size: 36px;
+	border-top: 2px solid #555;
+	border-bottom: 2px solid #555;
+	line-height: 46px;
+}
+#main-cta-container .cta-content ul{
+	margin-top: 10px;
+}
+#main-cta-container .cta-content ul li {
+	
+	line-height: 36px;
+}
+.tri-cta .cta h3 {
+	border-top: 1px solid #555;
+	border-bottom: 1px solid #555;
+	line-height: 21px;
+	font-size: 18px;
+	vertical-align: middle;
+	padding-top: 3px;
+	float: left;
+	width: 100%;
+	margin-top: 7px;
+	margin-bottom: 7px;
+	
+}
+
+.image-wrapper {
+	margin-bottom: 10px;
+}
+.matted{
+	float: left;
+	padding: 12px;
+	background: #fff url(images/paper_bg.png) repeat;
+	box-shadow: 1px 1px 4px rgba(0, 0, 0, .3);
+	
+}
+.gallery-item img{
+	max-width: 90% !important;
+	height: auto !important;
+	border:  0 !important;
+	padding: 12px;
+	background: #fff url(images/paper_bg.png) repeat;
+	box-shadow: 1px 1px 4px rgba(0, 0, 0, .3);
+}
+.action {
+	font-weight: 800;
+	font-size: 1.2em;
+	line-height: 46px;
+}
+
+#partner-details #address {
+	font-size: 16px;
+	line-height: 24px;
+	margin-top: 18px;
+	
+} 
+#partner-details #phone {
+	font-size: 24px;
+	line-height: 40px;
+} 
+
+#partner-details dt {
+	display: block;
+	width: 12%;
+	float: left;
+	margin: 10px 5px 0;
+}
+#partner-details dd {
+	width: 33%;
+	float: left;
+	margin: 10px 2% 0 0;
+}
+
+#partner-details .hours {
+	float: left;
+	width: 100%;
+	margin: 18px 0;
+}
+#partner-details #passport-discount {
+	float: left;
+	width: 100%;
+}
+.discount {
+	color: #a00;
+}
+.spirit-list {
+	float: left;
+	width: 100%;
+	
+}
+.spirit-list ul {
+	list-style: none;
+	margin-left: 10px;
+}
+.spirit-list ul li {
+	color:  #a00;
+	margin:8px 0 0;
+}
+
+.archive .post h4{
+	margin:  20px 0 5px;
+	color: #a00;
+}
+.archive .post h4 a{
+		color: #333;
+}
+#footer h2{
+	border-top: 1px solid #555;
+	border-bottom: 1px solid #555;
+	padding-top: 5px;
+	margin: 10px 0;
+	line-height: 36px;
+}
+
+#PayPalExpressCheckoutButton {
+	width: auto;
 }

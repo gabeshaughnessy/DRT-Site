@@ -14,7 +14,7 @@
 	</div>
 </div><!-- end of the wrapper -->
 <div id="bottom">
-<img src="http://gabesimagination.com/distilleryrowtours/wp-content/uploads/2011/06/distilleries-1044.jpg" width="100%" height="auto" id="bg_image"/>
+<img src="<?php echo of_get_option('default_bg', get_template_directory_uri().'/images/bg3.jpg'); ?>" width="100%"  id="bg_image"/>
 </div>
 </body>
 
