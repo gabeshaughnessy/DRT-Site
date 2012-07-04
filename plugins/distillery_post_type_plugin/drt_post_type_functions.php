@@ -197,7 +197,7 @@ function be_create_metaboxes() {
 	$meta_boxes[] = array(
 		'id' => 'partner-hours',
 	    'title' => 'Business hours',
-	    'pages' => array('drt_partner'), // post type
+	    'pages' => array('drt_partner', 'drt_distillery'), // post type
 		'context' => 'normal',
 		'priority' => 'low',
 		'show_names' => true, // Show field names left of input
