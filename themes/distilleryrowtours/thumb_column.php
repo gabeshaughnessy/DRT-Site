@@ -27,6 +27,8 @@
 					}
 			}
 	}
+	
+
 	// for posts
 	add_filter( 'manage_posts_columns', 'fb_AddThumbColumn' );
 	add_action( 'manage_posts_custom_column', 'fb_AddThumbValue', 10, 2 );

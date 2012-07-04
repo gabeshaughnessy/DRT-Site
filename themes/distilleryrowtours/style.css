@@ -55,6 +55,7 @@ h1,h2,h3,h4,h5,h6{
 	background: transparent url(images/drt_logo.png) no-repeat;
 }
 #description h3{
+	text-transform: none;
 	display: block;
 	font-family: 'Dancing Script', cursive;
 	line-height: 41px;
@@ -256,7 +257,7 @@ text-shadow: 0 -1px 0px rgba(0, 0, 0, .5), 0 1px 2px rgba(255, 255, 255,0.2);
 	margin: 10px 5px 0;
 }
 #partner-details dd {
-	width: 33%;
+	width: 31%;
 	float: left;
 	margin: 10px 2% 0 0;
 }
