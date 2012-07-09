@@ -11,12 +11,12 @@
   <!-- Display the Post's Content in a div box. -->
  <div class="entry row">
  <?php if(has_post_thumbnail()){?>
-	 <div class="image-wrapper span3" >
+	 <div class="image-wrapper span4" >
 	 <div class="matted">
 		 <?php the_post_thumbnail('three-col'); ?>
 		 </div>
 	 </div>
-	 <div class="span9"><?php } 
+	 <div class="span8"><?php } 
 	 else { ?>
 	 
 	 <div class="span12">
