@@ -1,4 +1,7 @@
 <div id="pitch" class="">
+<div id="main-cta-container">
+<div class="flexslider">
+  <div class="slides">
 <?php
 // The Pitch Query
 
@@ -23,16 +26,17 @@ endwhile;
 wp_reset_postdata();
 ?>
 
-</div>
 
-<div id="main-cta-container">
+</div><!-- end flexslider -->
+</div><!-- end CTA Container -->
+
 <?php
 // The Call To Action Query
 
 $args = array(
 'post_type' => 'drt_call_to_action',
 'order' => 'ASC',
-'limit' => '1',
+'limit' => '3',
 'tax_query' => array(
 		array(
 			'taxonomy' => 'cta_position',

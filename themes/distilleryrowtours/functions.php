@@ -116,6 +116,7 @@ function getsome_js() {
 	//wp_enqueue_script('disable-select', THEMELOCATION .'/scripts/jquery.disable.text.select.js', 'jquery');
 	/* Tweets */
 	//wp_enqueue_script('get_tweets', THEMELOCATION .'/scripts/get_tweets.js', 'jquery');//Custom Twitter Script to get tweets as a JSON object
+	wp_enqueue_script('flexslider', THEMELOCATION .'/scripts/jquery.flexslider-min.js', 'jquery');
 	wp_enqueue_script('custom', THEMELOCATION .'/scripts/custom.js', 'jquery');
 	
 	}

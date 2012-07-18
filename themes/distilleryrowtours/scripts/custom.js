@@ -14,4 +14,15 @@ jQuery(document).ready(function($){
 		$(this).find('img').css({'opacity':0});
 		console.log(templateDir);
 	});
+	
+	jQuery('.flexslider').flexslider({
+	  animation: "slide",
+	  selector: ".slides > div",
+	  controlNav: false,
+	  directionNav: false
+	});
+	
 });
+
+jQuery(window).load(function() {
+ });
