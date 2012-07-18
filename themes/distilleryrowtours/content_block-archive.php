@@ -16,7 +16,7 @@
  <div class="entry">
  <?php if(has_post_thumbnail()){?>
 	 <div class="image-wrapper" >
-		 <a href="<?php the_permalink(); ?>" title="<?php the_title(); ?>">
+		 <a class="post-link" href="<?php the_permalink(); ?>" title="<?php the_title(); ?>">
 			 <div class="matted">
 			 <?php the_post_thumbnail('three-col'); ?>
 			 </div>

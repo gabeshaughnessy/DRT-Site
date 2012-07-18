@@ -12,7 +12,7 @@
 
   <!-- Display the Post's Content in a div box. -->
  <div class="entry">
- <p class="discount">
+ <a class="post-link" href="<?php the_permalink(); ?>" title="<?php the_title(); ?>"><p class="discount">
  <?php
  if(get_post_meta($post->ID, 'drt_description', true)){
   echo get_post_meta($post->ID, 'drt_description', true);
@@ -20,10 +20,10 @@
 else {
 echo 'No discount at this time.';
 }
-  ?></p>
+  ?></p></a>
  <?php if(has_post_thumbnail()){?>
 	 <div class="image-wrapper" >	 
-		 <a href="<?php the_permalink(); ?>" title="<?php the_title(); ?>">
+		 <a class="post-link" href="<?php the_permalink(); ?>" title="<?php the_title(); ?>">
 			 <div class="matted">
 			 <?php the_post_thumbnail('three-col'); ?>
 			 </div>
