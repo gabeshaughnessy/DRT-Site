@@ -11,7 +11,7 @@ if (function_exists('add_theme_support')) {
     add_image_size('three-col', 280, 220, true);
     add_image_size('four-col', 300, 300, true);
     add_image_size('eight-col', 610, 420, true);
-    add_image_size('featured', 375, 300, false);
+    add_image_size('featured', 375, 600, false);
     add_image_size('pitch', 960, 400, true);
 }
 //and post thumbnail column in the admin menu
