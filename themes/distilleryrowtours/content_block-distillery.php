@@ -24,7 +24,7 @@
 	 	 ?>
  
    <?php the_content(); ?>
-   <?php echo do_shortcode('[gallery columns="2" size="four-col" link="file"]'); ?>
+   <?php echo do_shortcode('[gallery columns="3" size="two-col" link="file"]'); ?>
  </div>
 </div>
  </div> <!-- closes the first div box -->

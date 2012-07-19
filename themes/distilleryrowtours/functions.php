@@ -8,6 +8,7 @@ define('THEMELOCATION', get_bloginfo('stylesheet_directory'), true);
 if (function_exists('add_theme_support')) {
     add_theme_support('post-thumbnails');
     set_post_thumbnail_size(200, 100, true);
+    add_image_size('two-col', 140, 140, true);
     add_image_size('three-col', 280, 220, true);
     add_image_size('four-col', 300, 300, true);
     add_image_size('eight-col', 610, 420, true);
