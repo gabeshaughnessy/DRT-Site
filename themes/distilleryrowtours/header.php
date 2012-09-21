@@ -2,7 +2,7 @@
 <html <?php language_attributes(); ?>>
 <head>
 <meta charset="<?php bloginfo( 'charset' ); ?>" />
-<title><?php wp_title(); ?> <?php bloginfo( 'name' ); ?></title>
+<title><?php bloginfo( 'name' ); ?></title>
 <link rel="profile" href="http://gmpg.org/xfn/11" />
 <!-- Twitter Bootstrap -->
 <link rel="stylesheet" href="<?php bloginfo( 'stylesheet_directory' ); ?>/bootstrap/css/bootstrap.css" type="text/css" media="screen" />
