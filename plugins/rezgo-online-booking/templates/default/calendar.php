@@ -1,15 +1,5 @@
-<?php	
+<?php
 	$site->getCalendar($_REQUEST['item_id'], $_REQUEST['date']);
-	
-	// if this calendar is not active and jump=1 is passed, make up to 10 attempts to find availability
-	if(!$site->getCalendarActive() && $_REQUEST['jump'] == 1) {
-		$attempt = $_REQUEST['attempt'] + 1;
-		
-		if($attempt <= 12) {
-			$site->sendTo($site->base.'/calendar.php?item_id='.$_REQUEST['item_id'].'&date='.$site->getCalendarNext().'&jump=1&attempt='.$attempt);
-		}
-	}
-
 	$months = array("January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"); 
 ?>
 
@@ -114,10 +104,10 @@
 					</div>
 						
 					<script>
-						if($.browser.msie && $.browser.version < 8) {
-	     				$("#day_<?=$day->day?> a[rel]").overlay({closeOnClick: true});
+						if(jQuery.browser.msie && jQuery.browser.version < 8) {
+	     				jQuery("#day_<?=$day->day?> a[rel]").overlay({closeOnClick: true});
 	     			} else {
-	     				$("#day_<?=$day->day?> a[rel]").overlay({effect: 'apple', closeOnClick: true});
+	     				jQuery("#day_<?=$day->day?> a[rel]").overlay({effect: 'apple', closeOnClick: true});
 	     			}
 					</script>
 					

@@ -1,22 +1,27 @@
 <!-- PayPal Checkout -->
 <?php
-  $items = $_SESSION['Cart66Cart']->getItems();
-  $shipping = $_SESSION['Cart66Cart']->getShippingCost();
-  $shippingMethod = $_SESSION['Cart66Cart']->getShippingMethodName();
+  $items = Cart66Session::get('Cart66Cart')->getItems();
+  $shipping = Cart66Session::get('Cart66Cart')->getShippingCost();
+  $shippingMethod = Cart66Session::get('Cart66Cart')->getShippingMethodName();
   $setting = new Cart66Setting();
   $paypalEmail = Cart66Setting::getValue('paypal_email');
+  if(!$paypalEmail) {
+    throw new Cart66Exception('Invalid PayPal Standard Configuration', 66504); 
+  }
   $returnUrl = Cart66Setting::getValue('paypal_return_url');
+  $promotion = Cart66Session::get('Cart66Promotion');
+ 
   
   $checkoutOk = true;
-  if($_SESSION['Cart66Cart']->requireShipping()) {
+  if(Cart66Session::get('Cart66Cart')->requireShipping()) {
     $liveRates = Cart66Setting::getValue('use_live_rates');
     if($liveRates) {
-      if(!isset($_SESSION['Cart66LiveRates'])) {
+      if(!Cart66Session::get('Cart66LiveRates')) {
         $checkoutOk = false;
       }
       else {
         // Check to make sure a valid shipping method is selected
-        $selectedRate = $_SESSION['Cart66LiveRates']->getSelected();
+        $selectedRate = Cart66Session::get('Cart66LiveRates')->getSelected();
         if($selectedRate->rate === false) {
           $checkoutOk = false;
         }
@@ -30,8 +35,8 @@
   
   // Start affiliate program integration
   $aff = '';
-  if (!empty($_SESSION['ap_id'])) {
-    $aff .= $_SESSION['ap_id'];
+  if (Cart66Session::get('ap_id')) {
+    $aff .= Cart66Session::get('ap_id');
   }
   elseif(isset($_COOKIE['ap_id'])) {
     $aff .= $_COOKIE['ap_id'];
@@ -61,7 +66,7 @@
 <?php endif; ?>
 
 
-<?php if($_SESSION['Cart66Cart']->countItems() > 0): ?>
+<?php if(Cart66Session::get('Cart66Cart')->countItems() > 0): ?>
   <?php
     $paypalAction = 'https://www.paypal.com/cgi-bin/webscr';
     if(SANDBOX) {
@@ -92,8 +97,33 @@
         echo "\n<input type='hidden' name='shopping_url' value='" . Cart66Setting::getValue('shopping_url') . "' />\n";
       
         // Send shipping price as an item amount if the item total - discount amount = $0.00 otherwise paypal will ignore the discount
-        $itemTotal = $_SESSION['Cart66Cart']->getNonSubscriptionAmount() - $_SESSION['Cart66Cart']->getDiscountAmount();
-        if($itemTotal == 0 && $shipping > 0) {
+        $discount = Cart66Session::get('Cart66Cart')->getDiscountAmount();
+        
+        if(is_object($promotion) && $promotion->apply_to == 'total') {
+          $itemTotal = Cart66Session::get('Cart66Cart')->getNonSubscriptionAmount();
+          $itemDiscount = Cart66Session::get('Cart66Cart')->getDiscountAmount();
+          if($itemDiscount > 0) {
+            $itemTotal = $itemTotal - $itemDiscount;            
+          }
+          if($itemTotal <= 0) {
+            $discount = Cart66Session::get('Cart66Cart')->getNonSubscriptionAmount();
+            $shipping = $shipping + $itemTotal;
+            $itemTotal = 0;
+          }
+          
+        }
+        
+        if(is_object($promotion) && $promotion->apply_to == 'products'){
+          $itemTotal = Cart66Session::get('Cart66Cart')->getNonSubscriptionAmount() - Cart66Session::get('Cart66Cart')->getDiscountAmount();
+        }
+        
+        if(is_object($promotion) && $promotion->apply_to == 'shipping'){
+          $shipping = $shipping - Cart66Session::get('Cart66Cart')->getDiscountAmount();
+          $discount = 0;
+        }
+        
+        
+        if(isset($itemTotal) && $itemTotal == 0 && $shipping > 0) {
           echo "\n<input type='hidden' name='item_name_$i' value=\"Shipping\" />";
           echo "\n<input type='hidden' name='item_number_$i' value='SHIPPING' />";
           echo "\n<input type='hidden' name='amount_$i' value='" . $shipping . "' />";
@@ -102,30 +132,36 @@
         }
       ?>
       
-      <input type="hidden" name="cmd" value="_cart" />
-      <input type="hidden" name="upload" value="1" />
-      <input type="hidden" name="no_shipping" value="2" />
-      <input type="hidden" name="currency_code" value="<?php echo CURRENCY_CODE; ?>" id="currency_code" />
-      <input type="hidden" name="custom" value="<?php echo $shippingMethod ?>|<?php echo $aff;  ?>|<?php echo $gfIds ?>" />
-      
+      <input type='hidden' name='cmd' value='_cart' />
+      <input type='hidden' name='charset' value='utf-8'>
+      <input type='hidden' name='upload' value='1' />
+      <input type='hidden' name='no_shipping' value='2' />
+      <input type='hidden' name='currency_code' value='<?php echo CURRENCY_CODE; ?>' id='currency_code' />
+      <input type='hidden' name='custom' value='<?php echo $shippingMethod ?>|<?php echo $aff;  ?>|<?php echo $gfIds ?>|<?php if(Cart66Session::get('Cart66PromotionCode')) { echo Cart66Session::get('Cart66PromotionCode'); } ?>' />
       <?php if($shipping > 0): ?>
         <input type='hidden' name='handling_cart' value='<?php echo $shipping ?>' />
       <?php endif;?>
     
-      <?php if($_SESSION['Cart66Cart']->getDiscountAmount() > 0): ?>
-        <input type="hidden" name="discount_amount_cart" value="<?php echo number_format($_SESSION['Cart66Cart']->getDiscountAmount(), 2, '.', ''); ?>"/>
+      <?php if(Cart66Session::get('Cart66Promotion') && Cart66Session::get('Cart66Promotion')->getDiscountAmount(Cart66Session::get('Cart66Cart')) > 0): ?>
+        <input type='hidden' name='discount_amount_cart' value='<?php echo $discount; ?>'/>
       <?php endif; ?>
     
-      <input type="hidden" name="notify_url" value="<?php echo $ipnUrl ?>">
+      <input type='hidden' name='notify_url' value='<?php echo $ipnUrl ?>'>
       <?php if($returnUrl): ?>
-        <input type="hidden" name="return" value="<?php echo $returnUrl ?>" />
+        <input type='hidden' name='return' value='<?php echo $returnUrl ?>' />
       <?php endif; ?>
   
-      <input id='PayPalCheckoutButton' type='image' src='https://www.paypal.com/en_US/i/btn/btn_xpressCheckout.gif' value='Checkout With PayPal' />
+      <?php
+      $paypalImageUrl = 'https://www.paypal.com/en_US/i/btn/btn_xpressCheckout.gif';
+      if(CART66_PRO && Cart66Setting::getValue('custom_paypal_standard_image')) {
+        $paypalImageUrl = Cart66Setting::getValue('custom_paypal_standard_image');
+      }
+      ?>
+      <input id='PayPalCheckoutButton' type='image' src='<?php echo $paypalImageUrl; ?>' value='Checkout With PayPal' />
     </form>
   <?php endif; ?>
 <?php endif; ?>
 
   <?php else: ?>
-    <p>You must configure your payment settings</p>
+    <p><?php _e( 'You must configure your payment settings' , 'cart66' ); ?></p>
   <?php endif; ?>

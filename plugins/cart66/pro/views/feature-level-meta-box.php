@@ -13,7 +13,7 @@
       <?php endforeach; ?>
   </p>
   
-  <p style="margin:0; padding: 3px 0px; font-weight: bold;">Your Active Subscription Plans</p>
+  <p style="margin:0; padding: 3px 0px; font-weight: bold;">Your Active Memberships &amp; Subscriptions</p>
   <p>
       <?php foreach($data['plans'] as $plan => $featureLevel): ?>
         <?php echo $plan ?> (<?php echo $featureLevel ?>) <br/>

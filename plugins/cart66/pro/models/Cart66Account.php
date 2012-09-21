@@ -1,6 +1,8 @@
 <?php
 class Cart66Account extends Cart66ModelAbstract {
   
+  protected $_jqErrors = array();
+  
   public function __construct($id=null) {
     $this->_tableName = Cart66Common::getTableName('accounts');
     parent::__construct($id);
@@ -20,20 +22,21 @@ class Cart66Account extends Cart66ModelAbstract {
     $sql = $this->_db->prepare($sql, $email, md5($password));
     Cart66Common::log('[' . basename(__FILE__) . ' - line ' . __LINE__ . "] Login query: $sql");
     if($accountId = $this->_db->get_var($sql)) {
-      $_SESSION['Cart66AccountId'] = $accountId;
+      Cart66Session::set('Cart66AccountId', $accountId);
       $this->load($accountId);
     }
     return $accountId;
   }
   
   public static function logout($redirectUrl=null) {
-    if(isset($_SESSION['Cart66AccountId'])) {
-      unset($_SESSION['Cart66AccountId']);
+    if(Cart66Session::get('Cart66AccountId')) {
+      Cart66Session::drop('Cart66AccountId');
+      Cart66Session::drop('Cart66ProRateAmount');
       if(isset($redirectUrl)) {
         $url = str_replace('cart66-task=logout', '', $redirectUrl);
         Cart66Common::log('[' . basename(__FILE__) . ' - line ' . __LINE__ . "] Redirecting after logout to: $url");
         wp_redirect($url);
-        die();
+        exit;
       }
     }
   }
@@ -94,7 +97,7 @@ class Cart66Account extends Cart66ModelAbstract {
       $message = Cart66Setting::getValue('reset_intro');
       $message .= "\n\nYour new password is: $newPwd";
       $headers = 'From: '. Cart66Setting::getValue('reset_from_name') .' <' . Cart66Setting::getValue('reset_from_address') . '>' . "\r\n\\";
-      Cart66Common::mail($email, $subject, $message, $headers);
+      Cart66Notifications::mail($email, $subject, $message, $headers);
       $result->success = true;
       $result->message = "A new password has been emailed to $email";
     }
@@ -119,7 +122,7 @@ class Cart66Account extends Cart66ModelAbstract {
     $id = false;
     if($this->id > 0) {
       $accountSubscriptions = Cart66Common::getTableName('account_subscriptions');
-      $sql = "SELECT id from $accountSubscriptions where account_id = %d order by active_until desc";
+      $sql = "SELECT id from $accountSubscriptions where account_id = %d order by id desc";
       $sql = $this->_db->prepare($sql, $this->id);
       $subscriptionId = $this->_db->get_var($sql);
       if($subscriptionId > 0) {
@@ -144,7 +147,7 @@ class Cart66Account extends Cart66ModelAbstract {
       $sub = new Cart66AccountSubscription($id);
     }
     else {
-      Cart66Common::log('[' . basename(__FILE__) . ' - line ' . __LINE__ . "] Unable to find a current subscription for account: $this->id");
+      Cart66Common::log('[' . basename(__FILE__) . ' - line ' . __LINE__ . "] Returning false because unable to find a current subscription for account: $this->id");
     }
     return $sub;
   }
@@ -205,7 +208,7 @@ class Cart66Account extends Cart66ModelAbstract {
       $interval = $plan->billingInterval . ' ' . $plan->getBillingIntervalUnit();
       
       // Define initial expiration date
-      $activeUntil = isset($activeUntil) ? date('Y-m-d H:i:s', strtotime($activeUntil)) : date('Y-m-d H:i:s', strtotime('+ 1 day'));
+      $activeUntil = isset($activeUntil) ? date('Y-m-d H:i:s', strtotime($activeUntil)) : date('Y-m-d H:i:s', strtotime('+ 1 day', Cart66Common::localTs()));
       
       $data = array(
         'account_id' => $this->id,
@@ -217,9 +220,55 @@ class Cart66Account extends Cart66ModelAbstract {
         'active_until' => $activeUntil,
         'billing_interval' => $interval,
         'status' => 'active',
-        'active' => 0
+        'active' => 0,
+        'product_id' => $plan->id
       );
 
+      $subscription = new Cart66AccountSubscription();
+      $subscription->setData($data);
+      $subscription->save();
+    }
+  }
+  
+  public function attachMembershipProduct($product, $firstName=null, $lastName=null) {
+    if($this->id > 0 && $product->isMembershipProduct()) {
+      Cart66Common::log('[' . basename(__FILE__) . ' - line ' . __LINE__ . "] Attaching a membership product to account: $this->id");
+      
+      $firstName = isset($firstName) ? $firstName : $this->firstName;
+      $lastName = isset($lastName) ? $lastName : $this->lastName;
+      
+      $data = array(
+        'account_id' => $this->id,
+        'billing_first_name' => $firstName,
+        'billing_last_name' => $lastName,
+        'subscription_plan_name' => $product->name,
+        'feature_level' => $product->featureLevel,
+        'status' => 'active',
+        'active' => 1,
+        'product_id' => $product->id
+      );
+      
+      $duration = '+ ' . $product->billingInterval . ' ' . $product->billingIntervalUnit;
+      if($product->lifetimeMembership == 1) {
+        $data['lifetime'] = 1;
+      }
+      else {
+        $data['active_until'] = date('Y-m-d H:i:s', strtotime($duration));
+      }
+      
+      // Look for extension or upgrade
+      if($subscription = $this->getCurrentAccountSubscription()) {
+        if($subscription->featureLevel == $product->featureLevel && $product->lifetimeMembership != 1) {
+          // Extend active_until date to prevent overlapping duration intervals
+          $data['active_until'] = date('Y-m-d H:i:s', strtotime($subscription->activeUntil . $duration, Cart66Common::localTs()));
+        }
+        // Expire current subscription
+        $subscription->status = 'canceled';
+        $subscription->active = 0;
+        $subscription->activeUntil = date('Y-m-d 00:00:00', Cart66Common::localTs());
+        $subscription->save();
+      }
+      
       $subscription = new Cart66AccountSubscription();
       $subscription->setData($data);
       $subscription->save();
@@ -243,6 +292,9 @@ class Cart66Account extends Cart66ModelAbstract {
     }
   }
   
+  /**
+   * Delete the account and all account subscriptions assoicated with this account
+   */
   public function deleteMe() {
     if($this->id > 0) {
       $sub = new Cart66AccountSubscription();
@@ -259,7 +311,7 @@ class Cart66Account extends Cart66ModelAbstract {
     $username = $this->username;
     
     if(empty($username)) { 
-      $this->addError('empty username', 'Username required', 'account-username');
+      $this->addError('empty username', __("Username required","cart66"), 'account-username');
       Cart66Common::log('[' . basename(__FILE__) . ' - line ' . __LINE__ . "] Account username is empty and must be provided");
       $isUnique = false;
     }
@@ -272,7 +324,7 @@ class Cart66Account extends Cart66ModelAbstract {
       $num = $this->_db->get_var($sql);
       Cart66Common::log('[' . basename(__FILE__) . ' - line ' . __LINE__ . "] Cart66 Account: Is username unique:\n$sql\nCount: $num");
       if($num > 0) {
-        $this->addError('duplicate username', 'Username unavailable', 'account-username');
+        $this->addError('duplicate username', __("Username unavailable","cart66"), 'account-username');
         $isUnique = false;
         Cart66Common::log('[' . basename(__FILE__) . ' - line ' . __LINE__ . "] Account validation error: email address is not unique");
       }
@@ -289,7 +341,7 @@ class Cart66Account extends Cart66ModelAbstract {
     $isValid = true;
     if(!Cart66Common::isValidEmail($this->email)) {
       $isValid = false;
-      $this->addError('email', 'Email address is invalid', 'account-email');
+      $this->addError('email', __("Email address is invalid","cart66"), 'account-email');
       Cart66Common::log('[' . basename(__FILE__) . ' - line ' . __LINE__ . "] Account validation error: email address is not valid");
       
     }
@@ -305,10 +357,39 @@ class Cart66Account extends Cart66ModelAbstract {
     $emptyMd5 = md5('');
     if($pwd == $emptyMd5) {
       $isValid = false;
-      $this->addError('password', 'Account password is required', 'account-password');
+      $this->addError('password', __("Account password is required","cart66"), 'account-password');
       Cart66Common::log('[' . basename(__FILE__) . ' - line ' . __LINE__ . "] Account validation error: password is required");
     }
     return $isValid;
+  }
+  
+  
+  public function accountName() {
+    $name = $this->first_name . ' ' . $this->last_name;
+    return $name;
+  }
+  
+  public function getOrderId(){
+    $order = new Cart66Order();
+    $orderId = $order->getOrderIdByAccountId($this->id);
+    return $orderId;
+  }
+  
+  public function getOrderIdLink(){
+    $output = '';
+    if($orderId = $this->getOrderId()){
+      $output = " | <a href='?page=cart66_admin&task=view&id=$orderId'>Order</a>";
+    }
+    
+    return $output;
+  }
+  
+  public function loadByEmail($email) {
+    $itemsTable = Cart66Common::getTableName('accounts');
+    $sql = "SELECT id from $itemsTable where email = '$email'";
+    $id = $this->_db->get_var($sql);
+    $this->load($id);
+    return $this->id;
   }
   
 }

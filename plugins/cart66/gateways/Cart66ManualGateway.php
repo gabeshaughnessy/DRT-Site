@@ -10,14 +10,20 @@ class Cart66ManualGateway extends Cart66GatewayAbstract {
   public function setPayment($p) {
     $this->_payment = $p;
     if($p['email'] == '') {
-      $this->_errors['Email address'] = "Email address is required";
+      $this->_errors['Email address'] = __('Email address is required','cart66');
       $this->_jqErrors[] = "payment-email";
     }
 
     if($p['phone'] == '') {
-      $this->_errors['Phone'] = "Phone number is required";
+      $this->_errors['Phone'] = __('Phone number is required','cart66');
       $this->_jqErrors[] = "payment-phone";
     }
+    
+    if(!Cart66Common::isValidEmail($p['email'])) {
+      $this->_errors['Email'] = __("Email address is not valid","cart66");
+      $this->_jqErrors[] = 'payment-email';
+    }
+    
   }
   
    public function getCreditCardTypes() {

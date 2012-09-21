@@ -91,72 +91,84 @@ abstract class Cart66GatewayAbstract {
   }
 
   public function setBilling($b) {
-    if(!(isset($b['state']) && !empty($b['state']))) {
-      $b['state'] = trim($b['state-text']);
-    }
-    unset($b['state-text']);
-    
-    $this->_billing = $b;
-    $skip = array('address2', 'billing-state-text');
-    foreach($b as $key => $value) {
-      if(!in_array($key, $skip)) {
-        $value = trim($value);
-        if($value == '') {
-          $keyName = ucwords(preg_replace('/([A-Z])/', " $1", $key));
-          $this->_errors['Billing ' . $keyName] = "Billing $keyName required";
-          $this->_jqErrors[] = "billing-$key";
+    if(is_array($b)) {
+      if(!(isset($b['state']) && !empty($b['state']))) {
+        if(isset($b['state_text'])) {
+          $b['state'] = trim($b['state_text']);
+        }
+      }
+      unset($b['state_text']);
+
+      $this->_billing = $b;
+      $skip = array('address2', 'billing-state_text');
+      foreach($b as $key => $value) {
+        if(!in_array($key, $skip)) {
+          $value = trim($value);
+          if($value == '') {
+            $keyName = ucwords(preg_replace('/([A-Z])/', " $1", $key));
+            $this->_errors['Billing ' . $keyName] = __('Billing ','cart66') . $keyName . __(' required','cart66');
+            $this->_jqErrors[] = "billing-$key";
+          }
         }
       }
     }
   } 
 
   public function setPayment($p) {
-    
-    // Remove all non-numeric characters from card number
-    if(isset($p['cardNumber'])) {
-      $cardNumber = $p['cardNumber'];
-      $p['cardNumber'] = preg_replace('/\D/', '', $cardNumber);
-    }
-    
-    $this->_payment = $p;
-    
-    foreach($p as $key => $value) {
-      $value = trim($value);
-      if($value == '') {
-        $keyName = preg_replace('/([A-Z])/', " $1", $key);
-        $this->_errors['Payment ' . $keyName] = "Payment $keyName required";
-        $this->_jqErrors[] = "payment-$key";
+    if(is_array($p)) {
+      // Remove all non-numeric characters from card number
+      if(isset($p['cardNumber'])) {
+        $cardNumber = $p['cardNumber'];
+        $p['cardNumber'] = preg_replace('/\D/', '', $cardNumber);
       }
-    }
-    if(strlen($p['cardNumber']) < 13) {
-      $this->_errors['Payment Card Number'] = 'Invalid credit card number';
-      $this->_jqErrors[] = "payment-cardNumber";
-    } 
 
-    // For subscription accounts
-    if(isset($p['password'])) {
-      if($p['password'] != $p['password2']) {
-        $this->_errors['Password'] = "Passwords do not match";
-        $this->_jqErrors[] = 'payment-password';
+      $this->_payment = $p;
+
+      foreach($p as $key => $value) {
+        $value = trim($value);
+        if($value == '') {
+          $keyName = preg_replace('/([A-Z])/', " $1", $key);
+          $this->_errors['Payment ' . $keyName] = __('Payment ','cart66') . $keyName . __(' required','cart66');
+          $this->_jqErrors[] = "payment-$key";
+        }
+      }
+      if(strlen($p['cardNumber']) > 0 && strlen($p['cardNumber']) < 13) {
+        $this->_errors['Payment Card Number'] = __('Invalid credit card number','cart66');
+        $this->_jqErrors[] = "payment-cardNumber";
+      }
+      
+      if(!Cart66Common::isValidEmail($p['email'])) {
+        $this->_errors['Email'] = __("Email address is not valid","cart66");
+        $this->_jqErrors[] = 'payment-email';
+      }
+
+      // For subscription accounts
+      if(isset($p['password'])) {
+        if($p['password'] != $p['password2']) {
+          $this->_errors['Password'] = __("Passwords do not match","cart66");
+          $this->_jqErrors[] = 'payment-password';
+        }
       }
     }
   }
 
   public function setShipping($s) {
-    if(!(isset($s['state']) && !empty($s['state']))) {
-      $s['state'] = trim($s['state-text']);
-    }
-    unset($s['state-text']);
-    
-    $this->_shipping = $s;
-    $skip = array('address2', 'shipping-state-text');
-    foreach($s as $key => $value) {
-      if(!in_array($key, $skip)) {
-        $value = trim($value);
-        if($value == '') {
-          $keyName = preg_replace('/([A-Z])/', " $1", $key);
-          $this->_errors['Shipping ' . $keyName] = "Shipping $keyName Required";
-          $this->_jqErrors[] = "shipping-$key";
+    if(is_array($s)) {
+      if(!(isset($s['state']) && !empty($s['state']))) {
+        $s['state'] = trim($s['state_text']);
+      }
+      unset($s['state_text']);
+
+      $this->_shipping = $s;
+      $skip = array('address2', 'shipping-state_text');
+      foreach($s as $key => $value) {
+        if(!in_array($key, $skip)) {
+          $value = trim($value);
+          if($value == '') {
+            $keyName = preg_replace('/([A-Z])/', " $1", $key);
+            $this->_errors['Shipping ' . $keyName] = __('Shipping ','cart66') . $keyName . __(' required','cart66');
+            $this->_jqErrors[] = "shipping-$key";
+          }
         }
       }
     }
@@ -188,42 +200,65 @@ abstract class Cart66GatewayAbstract {
     );
     return $taxLocation;
   }
+  
+  /**
+   * Return the last $lenght digits of the credit card number or false 
+   * if the number is not set or is shorter than the requested length.
+   * 
+   * @param int (optional) The number of digits to return
+   * @return int | false
+   */
+  public function getCardNumberTail($length=4) {
+    $tail = false;
+    if(isset($this->_payment['cardNumber']) && strlen($this->_payment['cardNumber']) >= $length) {
+      $tail = substr($this->_payment['cardNumber'], -1 * $length);
+    }
+    return $tail;
+  }
 
   /**
    * Return true if the order should be taxed
    *
    * @return boolean
    */
-  public function isTaxed() {
-    $s = $this->getShipping();
-    if(count($s)) {
-      $taxRate = new Cart66TaxRate();
-      $isTaxed = $taxRate->loadByZip($s['zip']);
-      if($isTaxed == false) {
-        $isTaxed = $taxRate->loadByState($s['state']);
-      }
-      $this->_taxRate = $taxRate;
-      return $isTaxed;
-    }
-    else {
-      throw new Exception('Unable to determine tax rate because shipping data is unavailable');
-    }
+  public function isTaxed($isShippingTaxed=null) {
+     $s = $this->getShipping();
+     if(count($s)) {
+       $taxRate = new Cart66TaxRate();
+       $isTaxed = $taxRate->loadByZip($s['zip']);
+       if($isTaxed == false) {
+         $isTaxed = $taxRate->loadByState($s['state']);
+       }
+
+       $this->_taxRate = $taxRate;
+       $taxShipping = $taxRate->tax_shipping;
+     
+       return ($isShippingTaxed==null) ? $isTaxed : $taxShipping;
+     }
+     else {
+       throw new Exception(__('Unable to determine tax rate because shipping data is unavailable','cart66'));
+     }
   }
 
   public function taxShipping() {
+    Cart66Common::log('[' . basename(__FILE__) . ' - line ' . __LINE__ . "] Checking for taxed shipping");
     if(!isset($this->_taxRate)) {
       $this->isTaxed();
     }
-    $taxShipping = ($this->tax_shipping == 1) ? true : false;
+    $taxShipping = ($this->isTaxed('shipping') == 1) ? true : false;
     return $taxShipping;
+  }
+  
+  public function getTaxRate() {
+    return $this->_taxRate->rate;
   }
 
   public function getTaxAmount() {
     $tax = 0;
     if($this->isTaxed()) {
-      $taxable = $_SESSION['Cart66Cart']->getTaxableAmount();
+      $taxable = Cart66Session::get('Cart66Cart')->getTaxableAmount();
       if($this->taxShipping()) {
-        $taxable += $_SESSION['Cart66Cart']->getShippingCost();
+        $taxable += Cart66Session::get('Cart66Cart')->getShippingCost();
       }
       $tax = number_format($taxable * ($this->_taxRate->rate/100), 2, '.', '');
     }
@@ -260,15 +295,15 @@ abstract class Cart66GatewayAbstract {
     $orderInfo['email'] = $p['email'];
     $orderInfo['coupon'] = Cart66Common::getPromoMessage();
     $orderInfo['tax'] = $tax;
-    $orderInfo['shipping'] = $_SESSION['Cart66Cart']->getShippingCost();
-    $orderInfo['subtotal'] = $_SESSION['Cart66Cart']->getSubTotal();
+    $orderInfo['shipping'] = Cart66Session::get('Cart66Cart')->getShippingCost();
+    $orderInfo['subtotal'] = Cart66Session::get('Cart66Cart')->getSubTotal();
     $orderInfo['total'] = preg_replace("/[^0-9\.]/", "", $total);
     $orderInfo['trans_id'] = $transId;
     $orderInfo['status'] = $status;
-    $orderInfo['ordered_on'] = date('Y-m-d H:i:s');
-    $orderInfo['shipping_method'] = $_SESSION['Cart66Cart']->getShippingMethodName();
+    $orderInfo['ordered_on'] = date('Y-m-d H:i:s', Cart66Common::localTs());
+    $orderInfo['shipping_method'] = Cart66Session::get('Cart66Cart')->getShippingMethodName();
     $orderInfo['account_id'] = $accountId;
-    $orderId = $_SESSION['Cart66Cart']->storeOrder($orderInfo);  
+    $orderId = Cart66Session::get('Cart66Cart')->storeOrder($orderInfo);  
     return $orderId;
   }
   
@@ -280,9 +315,9 @@ abstract class Cart66GatewayAbstract {
    */
   public function validateCartForCheckout() {
     $isValid = true;
-    $itemCount = $_SESSION['Cart66Cart']->countItems();
+    $itemCount = Cart66Session::get('Cart66Cart')->countItems();
     if($itemCount < 1) {
-      $this->_errors['Invalid Cart'] = "There must be at least one item in the cart.";
+      $this->_errors['Invalid Cart'] = __('There must be at least one item in the cart.','cart66');
       $isValid = false;
     }
     return $isValid;

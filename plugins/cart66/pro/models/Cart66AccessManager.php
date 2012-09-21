@@ -20,12 +20,21 @@ class Cart66AccessManager {
    *   cart66_access = private
    */
   public static function getPrivatePageIds() {
-    $privatePages = array();
-    $pages = get_pages(array('meta_key'=>'cart66_access', 'meta_value' => 'private', 'hierarchical' => 0));
-    foreach($pages as $pg) {
-      $privatePages[] = $pg->ID;
+    $private_posts = array();
+    $query = new WP_Query(array(
+      'post_type' => 'any', 
+      'meta_key' => 'cart66_access', 
+      'meta_value' => 'private', 
+      'posts_per_page' => -1, 
+      'ignore_sticky_posts' => 1,
+      'tax_query' => array(
+        'include_children' => 1
+      )
+    ));
+    foreach($query->posts as $post) {
+      $private_posts[] = $post->ID;
     }
-    return $privatePages;
+    return $private_posts;
   }
 
   /**
@@ -37,6 +46,7 @@ class Cart66AccessManager {
       $privatePages = self::getPrivatePageIds();
       $deniedLink = self::getDeniedLink();
       if(in_array($pageId, $privatePages)) {
+        Cart66Session::set('Cart66AccessDeniedRedirect', Cart66Common::getCurrentPageUrl());
         wp_redirect($deniedLink);
         exit;
       }

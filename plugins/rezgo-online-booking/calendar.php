@@ -10,8 +10,6 @@
 	
 	// start a new instance of RezgoSite
 	$site = new RezgoSite();
-	
-	$site->getDoctype();
 ?>
 
 <?=$site->getTemplate('calendar')?>

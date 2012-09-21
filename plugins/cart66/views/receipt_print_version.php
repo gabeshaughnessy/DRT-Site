@@ -9,7 +9,7 @@
 <head>
 	<meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
 
-	<title>Your Receipt</title>
+	<title><?php _e( 'Your Receipt' , 'cart66' ); ?></title>
 	<style type="text/css" media="print">
 /*<![CDATA[*/
 	 #print_button {
@@ -67,14 +67,16 @@
   
   <table border="0" cellpadding="0" cellspacing="0">
     <tr>
-      <td colspan="3"><p><strong>Order Number: <?php echo $order->trans_id ?></strong></p></td>
+      <td colspan="3"><p><strong><?php _e( 'Order Number' , 'cart66' ); ?>: <?php echo $order->trans_id ?></strong></p></td>
       <!-- <td>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</td>
       <td align="left"><p><strong>Date: <?php echo date('m/d/Y', strtotime($order->ordered_on)); ?></strong></p></td> -->
     </tr>
+    
+    <?php if(strlen($order->bill_last_name) > 2): ?>
     <tr>
       <td valign="top">
         <p>
-          <strong>Billing Information</strong><br/>
+          <strong><?php _e( 'Billing Information' , 'cart66' ); ?></strong><br/>
         <?php echo $order->bill_first_name ?> <?php echo $order->bill_last_name ?><br/>
         <?php echo $order->bill_address ?><br/>
         <?php if(!empty($order->bill_address2)): ?>
@@ -92,7 +94,7 @@
       </td>
       <td>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</td>
       <td valign="top">
-        <p><strong>Contact Information</strong><br/>
+        <p><strong><?php _e( 'Contact Information' , 'cart66' ); ?></strong><br/>
         <?php if(!empty($order->phone)): ?>
           Phone: <?php echo Cart66Common::formatPhone($order->phone) ?><br/>
         <?php endif; ?>
@@ -101,11 +103,13 @@
         </p>
       </td>
     </tr>
+    <?php endif; ?>
+    
     <tr>
       <td>
         <?php if($order->shipping_method != 'None'): ?>
         <p>
-          <strong>Shipping Information</strong><br/>
+          <strong><?php _e( 'Shipping Information' , 'cart66' ); ?></strong><br/>
         <?php echo $order->ship_first_name ?> <?php echo $order->ship_last_name ?><br/>
         <?php echo $order->ship_address ?><br/>
 
@@ -122,21 +126,34 @@
 
         <?php endif; ?>
 
-        <br/><em>Delivery via: <?php echo $order->shipping_method ?></em><br/>
+        <br/><em><?php _e( 'Delivery via' , 'cart66' ); ?>: <?php echo $order->shipping_method ?></em><br/>
         </p>
         <?php endif; ?>
       </td>
-      <td>&nbsp;</td>
-      <td>&nbsp;</td>
+      <?php if(strlen($order->bill_last_name) > 2): ?>
+        <td>&nbsp;</td>
+        <td>&nbsp;</td>
+      <?php else: ?>
+        <td>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</td>
+        <td valign="top">
+          <p><strong><?php _e( 'Contact Information' , 'cart66' ); ?></strong><br/>
+          <?php if(!empty($order->phone)): ?>
+            Phone: <?php echo Cart66Common::formatPhone($order->phone) ?><br/>
+          <?php endif; ?>
+          Email: <?php echo $order->email ?><br/>
+          Date: <?php echo date('m/d/Y g:i a', strtotime($order->ordered_on)) ?>
+          </p>
+        </td>
+      <?php endif; ?>
     </tr>
   </table>
 
   <table id="viewCartTable" cellspacing="0" cellpadding="0">
     <tr>
-      <th style="text-align: left;">Product</th>
-      <th style="text-align: center;">Quantity</th>
-      <th style="text-align: left;">Item&nbsp;Price</th>
-      <th style="text-align: left;">Item&nbsp;Total</th>
+      <th style="text-align: left;"><?php _e( 'Product' , 'cart66' ); ?></th>
+      <th style="text-align: center;"><?php _e( 'Quantity' , 'cart66' ); ?></th>
+      <th style="text-align: left;"><?php _e( 'Item Price' , 'cart66' ); ?></th>
+      <th style="text-align: left;"><?php _e( 'Item Total' , 'cart66' ); ?></th>
     </tr>
 
     <?php foreach($order->getItems() as $item): ?>
@@ -159,8 +176,8 @@
 
         </td>
         <td style="text-align: center;"><?php echo $item->quantity ?></td>
-        <td><?php echo CURRENCY_SYMBOL ?><?php echo number_format($item->product_price, 2) ?></td>
-        <td><?php echo CURRENCY_SYMBOL ?><?php echo number_format($item->product_price * $item->quantity, 2) ?></td>
+        <td><?php echo CART66_CURRENCY_SYMBOL ?><?php echo number_format($item->product_price, 2) ?></td>
+        <td><?php echo CART66_CURRENCY_SYMBOL ?><?php echo number_format($item->product_price * $item->quantity, 2) ?></td>
       </tr>
       <?php
         if(!empty($item->form_entry_ids)) {
@@ -182,39 +199,39 @@
     <tr>
       <td class='noBorder' colspan='1'>&nbsp;</td>
       <td class='noBorder' colspan="1" style='text-align: center;'>&nbsp;</td>
-      <td class='noBorder' colspan="1" style='text-align: right; font-weight: bold;'>Subtotal:</td>
-      <td class='noBorder' colspan="1" style="text-align: left; font-weight: bold;"><?php echo CURRENCY_SYMBOL ?><?php echo $order->subtotal; ?></td>
+      <td class='noBorder' colspan="1" style='text-align: right; font-weight: bold;'><?php _e( 'Subtotal' , 'cart66' ); ?>:</td>
+      <td class='noBorder' colspan="1" style="text-align: left; font-weight: bold;"><?php echo CART66_CURRENCY_SYMBOL ?><?php echo $order->subtotal; ?></td>
     </tr>
 
     <?php if($order->shipping_method != 'None' && $order->shipping_method != 'Download'): ?>
     <tr>
       <td class='noBorder' colspan='1'>&nbsp;</td>
       <td class='noBorder' colspan="1" style='text-align: center;'>&nbsp;</td>
-      <td class='noBorder' colspan="1" style='text-align: right; font-weight: bold;'>Shipping:</td>
-      <td class='noBorder' colspan="1" style="text-align: left; font-weight: bold;"><?php echo CURRENCY_SYMBOL ?><?php echo $order->shipping; ?></td>
+      <td class='noBorder' colspan="1" style='text-align: right; font-weight: bold;'><?php _e( 'Shipping' , 'cart66' ); ?>:</td>
+      <td class='noBorder' colspan="1" style="text-align: left; font-weight: bold;"><?php echo CART66_CURRENCY_SYMBOL ?><?php echo $order->shipping; ?></td>
     </tr>
     <?php endif; ?>
 
     <?php if($order->discount_amount > 0): ?>
       <tr>
         <td class='noBorder' colspan='2'>&nbsp;</td>
-        <td class='noBorder' colspan="1" style='text-align: right; font-weight: bold;'>Discount:</td>
-        <td class='noBorder' colspan="1" style="text-align: left; font-weight: bold;">-<?php echo CURRENCY_SYMBOL ?><?php echo number_format($order->discount_amount, 2); ?></td>
+        <td class='noBorder' colspan="1" style='text-align: right; font-weight: bold;'><?php _e( 'Discount' , 'cart66' ); ?>:</td>
+        <td class='noBorder' colspan="1" style="text-align: left; font-weight: bold;">-<?php echo CART66_CURRENCY_SYMBOL ?><?php echo number_format($order->discount_amount, 2); ?></td>
       </tr>
     <?php endif; ?>
 
     <?php if($order->tax > 0): ?>
       <tr>
         <td class='noBorder' colspan='2'>&nbsp;</td>
-        <td class='noBorder' colspan="1" style='text-align: right; font-weight: bold;'>Tax:</td>
-        <td class='noBorder' colspan="1" style="text-align: left; font-weight: bold;"><?php echo CURRENCY_SYMBOL ?><?php echo number_format($order->tax, 2); ?></td>
+        <td class='noBorder' colspan="1" style='text-align: right; font-weight: bold;'><?php _e( 'Tax' , 'cart66' ); ?>:</td>
+        <td class='noBorder' colspan="1" style="text-align: left; font-weight: bold;"><?php echo CART66_CURRENCY_SYMBOL ?><?php echo number_format($order->tax, 2); ?></td>
       </tr>
     <?php endif; ?>
 
     <tr>
       <td class='noBorder' colspan='2' style='text-align: center;'>&nbsp;</td>
-      <td class='noBorder' colspan="1" style='text-align: right; font-weight: bold;'>Total:</td>
-      <td class='noBorder' colspan="1" style="text-align: left; font-weight: bold;"><?php echo CURRENCY_SYMBOL ?><?php echo number_format($order->total, 2); ?></td>
+      <td class='noBorder' colspan="1" style='text-align: right; font-weight: bold;'><?php _e( 'Total' , 'cart66' ); ?>:</td>
+      <td class='noBorder' colspan="1" style="text-align: left; font-weight: bold;"><?php echo CART66_CURRENCY_SYMBOL ?><?php echo number_format($order->total, 2); ?></td>
     </tr>
   </table>
   

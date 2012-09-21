@@ -46,7 +46,7 @@ class Cart66PayPalExpressCheckout extends Cart66GatewayAbstract {
     $this->_apiData['VERSION'] = '65';
 
     if(!($this->_apiData['USER'] && $this->_apiData['PWD'] && $this->_apiData['SIGNATURE'])) {
-      throw new Exception('Invalid paypal configuration');
+      throw new Cart66Exception('Invalid PayPal Express Configuration', 66501);
     }
   }
   
@@ -126,11 +126,18 @@ class Cart66PayPalExpressCheckout extends Cart66GatewayAbstract {
   public function SetExpressCheckout() {
     $this->_requestFields = array(
       'METHOD' => 'SetExpressCheckout',
-      'PAYMENTACTION' => 'Sale',
-      'LANDINGPAGE' => 'Billing'
+      'PAYMENTACTION' => 'Sale'
     );
+    if(CART66_PRO && !Cart66Setting::getValue('disable_landing_page')){
+      $this->_requestFields['LANDINGPAGE'] = 'Billing';
+    }
+
+    if(CART66_PRO && Cart66Setting::getValue('express_force_paypal')){
+      $this->_requestFields['SOLUTIONTYPE'] = 'Sole';
+    }
+
     $nvp = $this->_buildNvpStr();
-    Cart66Common::log("Set Express Checkout Request NVP: " . str_replace('&', "\n", $nvp));
+    Cart66Common::log('[' . basename(__FILE__) . ' - line ' . __LINE__ . "] Set Express Checkout Request NVP: " . str_replace('&', "\n", $nvp));
     $result = $this->_decodeNvp($this->_sendRequest($this->_apiEndPoint, $nvp));
     Cart66Common::log('[' . basename(__FILE__) . ' - line ' . __LINE__ . "] SetExpressCheckout result: " . print_r($result, true));
     return $result;
@@ -180,26 +187,147 @@ class Cart66PayPalExpressCheckout extends Cart66GatewayAbstract {
    *     [PROTECTIONELIGIBILITY] => Eligible
    * )
    */
-  public function DoExpressCheckout($token, $payerId, $itemAmount, $shipping, $tax=0) {
+  public function DoExpressCheckout($token, $payerId, $itemAmount, $shipping, $tax=0) {    
     $amount = $itemAmount + $shipping + $tax;
-  
+    $promotion = Cart66Session::get('Cart66Promotion');
+    $discount = Cart66Session::get('Cart66Cart')->getDiscountAmount();
+    $itemTotal = $itemAmount;
+    
+    if(is_object($promotion) && $promotion->apply_to == 'total') {
+      $itemTotal = Cart66Session::get('Cart66Cart')->getNonSubscriptionAmount();
+      $itemDiscount = Cart66Session::get('Cart66Cart')->getDiscountAmount();
+      if($itemDiscount > 0) {
+        $itemTotal = $itemTotal - $itemDiscount;            
+      }
+      if($itemTotal <= 0) {
+        $discount = Cart66Session::get('Cart66Cart')->getNonSubscriptionAmount();
+        $shipping = $shipping + $itemTotal;
+        $itemTotal = 0;
+      }
+      
+    }
+    
+    if(is_object($promotion) && $promotion->apply_to == 'products'){
+      $itemTotal = Cart66Session::get('Cart66Cart')->getNonSubscriptionAmount() - Cart66Session::get('Cart66Cart')->getDiscountAmount();
+    }
+    
+    if(is_object($promotion) && $promotion->apply_to == 'shipping'){
+      $shipping = $shipping - Cart66Session::get('Cart66Cart')->getDiscountAmount();
+      // make sure shipping is not negative
+      $shipping = ($shipping < 0) ? 0 : $shipping;
+      $discount = 0;
+    }
+    
+    if(isset($itemTotal) && $itemTotal == 0 && $shipping > 0) {
+      
+    }
+    
     $this->_requestFields = array(
       'METHOD' => 'DoExpressCheckoutPayment',
       'PAYMENTACTION' => 'Sale',
       'TOKEN' => $token,
       'PAYERID' => $payerId,
       'AMT' => number_format($amount, 2, '.', ''),
-      'ITEMAMT' => number_format($itemAmount, 2, '.', ''),
+      'ITEMAMT' => number_format($itemTotal, 2, '.', ''),
       'SHIPPINGAMT' => number_format($shipping, 2, '.', ''),
       'TAXAMT' => number_format($tax, 2, '.', ''),
       'CURRENCYCODE' => CURRENCY_CODE
     );
     $nvp = $this->_buildNvpStr();
     
-    Cart66Common::log("Do Express Checkout Request NVP: " . str_replace('&', "\n", $nvp));
+    Cart66Common::log('[' . basename(__FILE__) . ' - line ' . __LINE__ . "] Do Express Checkout Request NVP: " . str_replace('&', "\n", $nvp));
     
     $result = $this->_decodeNvp($this->_sendRequest($this->_apiEndPoint, $nvp));
     return $result;
+  }
+  
+  public function populatePayPalCartItems() {
+    $items = Cart66Session::get('Cart66Cart')->getItems(); // An array of Cart66CartItem objects
+    $promotion = Cart66Session::get('Cart66Promotion');
+    $shipping = Cart66Session::get('Cart66Cart')->getShippingCost();
+    
+    foreach($items as $i) {
+      if($i->isPayPalSubscription()) {
+        $plan = $i->getPayPalSubscription();
+        $itemData = array(
+          'BILLINGAGREEMENTDESCRIPTION' => $plan->name . ' ' . str_replace('&nbsp;', ' ', strip_tags($plan->getPriceDescription($plan->offerTrial > 0, '(trial)'))),
+        );
+        $this->addItem($itemData);
+
+        $chargeAmount = $i->getProductPrice();
+        if($chargeAmount > 0) {
+          $itemData = array(
+            'NAME' => $i->getFullDisplayName(),
+            'AMT' => $chargeAmount,
+            'NUMBER' => $i->getItemNumber(),
+            'QTY' => $i->getQuantity()
+          );
+        }
+        $this->addItem($itemData);
+      }
+      else {
+        $itemData = array(
+          'NAME' => $i->getFullDisplayName(),
+          'AMT' => $i->getProductPrice(),
+          'NUMBER' => $i->getItemNumber(),
+          'QTY' => $i->getQuantity()
+        );
+        $this->addItem($itemData);
+      }
+    }
+
+    // Add a coupon discount if needed
+      //$discount = number_format(Cart66Session::get('Cart66Cart')->getDiscountAmount(), 2, '.', '');
+    
+    $discount = Cart66Session::get('Cart66Cart')->getDiscountAmount();
+    
+    if(is_object($promotion) && $promotion->apply_to == 'total') {
+      $itemTotal = Cart66Session::get('Cart66Cart')->getNonSubscriptionAmount();
+      $itemDiscount = Cart66Session::get('Cart66Cart')->getDiscountAmount();
+      if($itemDiscount > 0) {
+        $itemTotal = $itemTotal - $itemDiscount;            
+      }
+      if($itemTotal <= 0) {
+        $discount = Cart66Session::get('Cart66Cart')->getNonSubscriptionAmount();
+        $shipping = $shipping + $itemTotal;
+        $itemTotal = 0;
+      }
+      
+    }
+    
+    if(is_object($promotion) && $promotion->apply_to == 'products'){
+      $itemTotal = Cart66Session::get('Cart66Cart')->getNonSubscriptionAmount() - Cart66Session::get('Cart66Cart')->getDiscountAmount();
+    }
+    
+    if(is_object($promotion) && $promotion->apply_to == 'shipping'){
+      $shipping = $shipping - Cart66Session::get('Cart66Cart')->getDiscountAmount();
+      $discount = 0;
+    }
+    
+    
+    if(isset($itemTotal) && $itemTotal == 0 && $shipping > 0) {     
+      Cart66Common::log('[' . basename(__FILE__) . ' - line ' . __LINE__ . "] adding shipping as an item"); 
+      $itemData = array(
+        'NAME' => 'Shipping',
+        'AMT' => number_format($shipping,2,'.',''),
+        'NUMBER' => 'SHIPPING',
+        'QTY' => '1'
+      );
+      $this->addItem($itemData);
+      $shipping = 0;
+    }
+    
+
+    if($discount > 0) {
+      $negDiscount = 0 - number_format($discount, 2, '.', '');
+      $itemData = array(
+        'NAME' => 'Discount',
+        'AMT' => $negDiscount,
+        'NUMBER' => 'DSC',
+        'QTY' => 1
+      );
+      $this->addItem($itemData);
+    }
   }
   
   protected function _buildNvpStr() {
@@ -245,13 +373,16 @@ class Cart66PayPalExpressCheckout extends Cart66GatewayAbstract {
       // Look for non-subscription products
       foreach($this->_items as $itemInfo) {
         if(!isset($itemInfo['BILLINGAGREEMENTDESCRIPTION'])) {
-          $params[] = 'L_PAYMENTREQUEST_0_NAME' . $counter . '=' . urlencode($itemInfo['NAME']);
-          $params[] = 'L_PAYMENTREQUEST_0_AMT' . $counter . '=' . urlencode(number_format($itemInfo['AMT'], 2, '.', ''));
-          $params[] = 'L_PAYMENTREQUEST_0_NUMBER' . $counter . '=' . urlencode($itemInfo['NUMBER']);
-          $params[] = 'L_PAYMENTREQUEST_0_QTY' . $counter . '=' . urlencode($itemInfo['QTY']);
+          $params[] = 'L_NAME' . $counter . '=' . urlencode($itemInfo['NAME']);
+          $params[] = 'L_AMT' . $counter . '=' . urlencode(number_format($itemInfo['AMT'], 2, '.', ''));
+          $params[] = 'L_NUMBER' . $counter . '=' . urlencode($itemInfo['NUMBER']);
+          $params[] = 'L_QTY' . $counter . '=' . urlencode($itemInfo['QTY']);
           $counter++;
         }
       }
+    }
+    else {
+      Cart66Common::log('[' . basename(__FILE__) . ' - line ' . __LINE__ . "] Not adding information about individual products because this items array is empty: " . print_r($this->_items, true));
     }
     
     $nvp = implode('&', $params);
@@ -266,7 +397,11 @@ class Cart66PayPalExpressCheckout extends Cart66GatewayAbstract {
     $ch = curl_init();
     
     //set the url, number of POST vars, POST data
-    curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, 0);
+    
+    // Do not worry about checking for SSL certs
+    curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, FALSE); 
+    curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, 2);
+    
     curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
     curl_setopt($ch,CURLOPT_URL, $url);
     curl_setopt($ch,CURLOPT_POST, $numParams);

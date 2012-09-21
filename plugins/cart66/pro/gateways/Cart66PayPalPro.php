@@ -45,34 +45,59 @@
 class Cart66PayPalPro extends Cart66PayPalExpressCheckout {
   
   protected $_response; // The response for attempting a transaction via PayPalPro gateway
-
+  
+  public function __construct() {
+    $username = Cart66Setting::getValue('paypalpro_api_username');
+    $password = Cart66Setting::getValue('paypalpro_api_password');
+    $signature = Cart66Setting::getValue('paypalpro_api_signature');
+    if(!($username && $password && $signature)) {
+      throw new Cart66Exception('Invalid PayPal Pro Configuration', 66502);
+    }
+    parent::__construct();
+  }
+  
   public function getCreditCardTypes() {
-    $cards = array(
-      'Visa' => 'Visa',
-      'MasterCard' => 'Mastercard',
-      'Discover' => 'Discover',
-      'American Express' => 'Amex'
-    );
-    return $cards;
+    $cardTypes = array();
+    $setting = new Cart66Setting();
+    $cards = Cart66Setting::getValue('auth_card_types');
+    if($cards) {
+      $cards = explode('~', $cards);
+      if(in_array('mastercard', $cards)) {
+        $cardTypes['MasterCard'] = 'mastercard';
+      }
+      if(in_array('visa', $cards)) {
+        $cardTypes['Visa'] = 'visa';
+      }
+      if(in_array('amex', $cards)) {
+        $cardTypes['American Express'] = 'amex';
+      }
+      if(in_array('discover', $cards)) {
+        $cardTypes['Discover'] = 'discover';
+      }
+    }
+    return $cardTypes;
   }
 
   public function initCheckout($total) {
+    Cart66Common::log('[' . basename(__FILE__) . ' - line ' . __LINE__ . "] PayPal Pro Checkout init total: $total");
+    
     $this->setCreditCardData();
     $this->setPayerInfo();
     $this->setPayerName();
     $this->setAddress();
     $this->setShipToAddress();
     
-    // Calculate total cost of all items in cart, not including tax and shipping
-    $itemTotal = $_SESSION['Cart66Cart']->getSubTotal() - $_SESSION['Cart66Cart']->getDiscountAmount();
-    $itemTotal = number_format($itemTotal, 2, '.', '');
-    
-    // Calculate shipping costs
-    $shipping = $_SESSION['Cart66Cart']->getShippingCost();
-    
     // Calculate tax
     $tax = $this->getTaxAmount();
-
+    
+    // Calculate total cost of all items in cart, not including tax and shipping
+    $itemSubTotal = Cart66Session::get('Cart66Cart')->getSubTotal() - Cart66Session::get('Cart66Cart')->getDiscountAmount() - Cart66Session::get('Cart66Cart')->getSubscriptionAmount();
+    $itemTotal = number_format($itemSubTotal, 2, '.', '');
+    $itemTotal = ($itemTotal < 0) ? 0 : $itemTotal;
+    
+    // Calculate shipping costs
+    $shipping = Cart66Session::get('Cart66Cart')->getShippingCost();
+    
     // Set payment information
     // 'NOTIFYURL' => $ipnUrl
     $currencyCode = Cart66Setting::getValue('currency_code');
@@ -86,11 +111,19 @@ class Cart66PayPalPro extends Cart66PayPalExpressCheckout {
     );
     
     // Add cart items to PayPal
-    $items = $_SESSION['Cart66Cart']->getItems(); // An array of Cart66CartItem objects
+    $items = Cart66Session::get('Cart66Cart')->getItems(); // An array of Cart66CartItem objects
     foreach($items as $i) {
+      
+      if($i->isSpreedlySubscription()) {
+        $amount = $i->getBaseProductPrice();
+      }
+      else {
+        $amount = $i->getProductPrice();
+      }
+      
       $itemData = array(
         'NAME' => $i->getFullDisplayName(),
-        'AMT' => $i->getProductPrice(),
+        'AMT' => $amount,
         'NUMBER' => $i->getItemNumber(),
         'QTY' => $i->getQuantity()
       );
@@ -98,7 +131,7 @@ class Cart66PayPalPro extends Cart66PayPalExpressCheckout {
     }
     
     // Add a coupon discount if needed
-    $discount = $_SESSION['Cart66Cart']->getDiscountAmount();
+    $discount = Cart66Session::get('Cart66Cart')->getDiscountAmount();
     if($discount > 0) {
       $negDiscount = 0 - $discount;
       $itemData = array(
@@ -112,7 +145,7 @@ class Cart66PayPalPro extends Cart66PayPalExpressCheckout {
     
     // Store the shipping price as an "item" if the item total is $0.00. Otherwise paypal will not accept the transaction.
     if($payment['ITEMAMT'] == 0 && $payment['SHIPPINGAMT'] > 0) {
-      $payment['ITEMAMT'] = $payment['SHIPPINGAMT'];
+      $payment['ITEMAMT'] = $payment['SHIPPINGAMT'] + (($itemSubTotal < 0) ? $itemSubTotal : 0);
       $itemData = array(
         'NAME' => 'Shipping',
         'AMT' => $payment['SHIPPINGAMT'],
@@ -141,8 +174,9 @@ class Cart66PayPalPro extends Cart66PayPalExpressCheckout {
   }
   
   public function getTransactionResponseDescription() {
-    $message = $this->_response['L_SHORTMESSAGE0'] . ': ' . $this->_response['L_LONGMESSAGE0'];
-    return $message;
+    $description['errormessage'] = $this->_response['L_SHORTMESSAGE0'] . ': ' . $this->_response['L_LONGMESSAGE0'];
+    $description['errorcode'] = $this->_response['L_ERRORCODE0'];
+    return $description;
   }
   
   /**
@@ -275,12 +309,13 @@ class Cart66PayPalPro extends Cart66PayPalExpressCheckout {
       'METHOD' => 'DoDirectPayment',
       'PAYMENTACTION' => 'Sale',
       'CURRENCYCODE' => CURRENCY_CODE,
+      // Change the following depending on IPV6
       'IPADDRESS' => $_SERVER['REMOTE_ADDR']
     );
     $nvp = $this->_buildNvpStr();
     
     $nvpLog = str_replace('&', "\n", $nvp);
-    Cart66Common::log("API END POINT: $this->_apiEndPoint \nNVP: $nvpLog");
+    Cart66Common::log('[' . basename(__FILE__) . ' - line ' . __LINE__ . "] API END POINT: $this->_apiEndPoint \nNVP: $nvpLog");
     
     $result = $this->_decodeNvp($this->_sendRequest($this->_apiEndPoint, $nvp));
     return $result;
@@ -297,9 +332,10 @@ class Cart66PayPalPro extends Cart66PayPalExpressCheckout {
     $queryString = array(
       'TOKEN' => $token,
       'METHOD' => 'CreateRecurringPaymentsProfile',
-      'PROFILESTARTDATE' => date('Y-m-d\Tg:i:s', strtotime($plan->getStartTimeFormula())),
+      'PROFILESTARTDATE' => date('Y-m-d\Tg:i:s', strtotime($plan->getStartTimeFormula(), Cart66Common::localTs())),
       'BILLINGPERIOD' => ucwords(rtrim($plan->billingIntervalUnit, 's')),
       'BILLINGFREQUENCY' => $plan->billingInterval,
+      'TOTALBILLINGCYCLES' => $plan->billingCycles,
       'AMT' => $plan->price,
       'INITAMT' => 0,
       'CURRENCYCODE' => CURRENCY_CODE,

@@ -15,7 +15,7 @@ class SpreedlySubscriber extends SpreedlyXmlObject {
     if(isset($subscriberData['token'])) { unset($subscriberData['token']); }
     if(isset($subscriberData['feature-level'])) { unset($subscriberData['feature-level']); }
     
-    $subscriberXml = SpreedlyCommon::buildXml($subscriberData, 'subscriber');
+    $subscriberXml = Cart66Common::arrayToXml($subscriberData, 'subscriber');
     $result = SpreedlyCommon::curlRequest('/subscribers.xml', 'post', $subscriberXml);
     if($result->code == '201') {
       $data = new SimpleXmlElement($result->response);
@@ -55,7 +55,7 @@ class SpreedlySubscriber extends SpreedlyXmlObject {
       'group' => $group,
       'amount' => $amount
     );
-    $feeXml = SpreedlyCommon::buildXml($fee, 'fee');
+    $feeXml = Cart66Common::arrayToXml($fee, 'fee');
     $customerId = (int)$this->customerId;
     echo "Calling: " . "/subscribers/{$customerId}/fees.xml\n";
     $result = SpreedlyCommon::curlRequest("/subscribers/{$customerId}/fees.xml", 'post', $feeXml);
@@ -89,18 +89,23 @@ class SpreedlySubscriber extends SpreedlyXmlObject {
   }
   
   public function updateLocalAccount() {
-    $account = new Cart66Account();
-    $account->load($this->customerId);
-    $account->hydrate($this);
-    $account->save();
-    Cart66Common::log('[' . basename(__FILE__) . ' - line ' . __LINE__ . "] Updated local account information: " . print_r($account->getData(), true));
+    $accountSub = new Cart66AccountSubscription();
+    if($accountSub = $accountSub->getOne("WHERE account_id = $this->customerId")) {
+      Cart66Common::log('[' . basename(__FILE__) . ' - line ' . __LINE__ . "] Hydrating account subscription with: " . print_r($this, true));
+      $accountSub->hydrate($this);
+      $accountSub->save();
+      Cart66Common::log('[' . basename(__FILE__) . ' - line ' . __LINE__ . "] Updated local account information: " . print_r($accountSub->getData(), true));
+    }
+    else {
+      Cart66Common::log('[' . basename(__FILE__) . ' - line ' . __LINE__ . "] Unable to update local account with new spreedly information - looking for account id: $this->customerId");
+    }
   }
   
   /**
    * All fields are optional - any field that is not provided will not be updated.
    */
   public static function updateRemoteAccount($customerId, $subscriberData) {
-    $subscriberXml = SpreedlyCommon::buildXml($subscriberData, 'subscriber');
+    $subscriberXml = Cart66Common::arrayToXml($subscriberData, 'subscriber');
     $result = SpreedlyCommon::curlRequest("/subscribers/{$customerId}.xml", "put", $subscriberXml);
     if($result->code != '200') {
       Cart66Common::log('[' . basename(__FILE__) . ' - line ' . __LINE__ . "] Spreedly Subscriber: Account information could not be updated. " . 

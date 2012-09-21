@@ -22,10 +22,21 @@ class Cart66AuthorizeNet extends Cart66GatewayAbstract {
     $this->addField('x_type', 'AUTH_CAPTURE');
     $this->addField('x_method', 'CC');
     $this->addField('x_relay_response', 'FALSE');
+    
+    if(!(Cart66Setting::getValue('auth_username') && Cart66Setting::getValue('auth_url') && Cart66Setting::getValue('auth_trans_key'))) {
+      throw new Cart66Exception('Invalid Authorize.net Configuration', 66510); 
+    }
+    $gatewayUrl = Cart66Setting::getValue('auth_url');
+    if($gatewayUrl == 'other') {
+      $gatewayUrl = Cart66Setting::getValue('auth_url_other');
+      if(!$gatewayUrl) {
+        throw new Cart66Exception('Invalid Gateway Configuration', 66511);
+      }
+    }
   }
   
   /**
-   * Return an array of accepted credit card types where the keys are the diplay values and the values are the gateway values
+   * Return an array of accepted credit card types where the keys are the display values and the values are the gateway values
    * 
    * @return array
    */
@@ -100,6 +111,20 @@ class Cart66AuthorizeNet extends Cart66GatewayAbstract {
         foreach( $this->fields as $key => $value ) {
            $this->field_string .= "$key=" . urlencode( $value ) . "&";
         }
+        $items = Cart66Session::get('Cart66Cart')->getItems();
+        foreach($items as $i) {
+          $itemNumber = str_replace("\t", " ", substr($i->getItemNumber(), 0, 31));
+          $product = new Cart66Product($i->getProductId());
+          $itemName = str_replace("\t", " ", substr($product->name, 0, 31));
+          $itemOptions = str_replace("\t", " ", substr($i->getOptionInfo(), 0, 29));
+          if($itemOptions != '') {
+            $itemOptions = '(' . $itemOptions . ')';
+          }
+          $itemQuantity = $i->getQuantity();
+          $itemTaxable = $product->taxable == 1 ? 'Y' : 'N';
+          $itemPrice = number_format($i->getProductPrice(), 2, '.', '');
+          $this->field_string .= "x_line_item=" . urlencode("$itemNumber<|>$itemName<|>$itemOptions<|>$itemQuantity<|>$itemPrice<|>$itemTaxable") . "&";
+        }
 
         // Execute the HTTPS post via CURL
         $ch = curl_init($this->gateway_url); 
@@ -114,7 +139,7 @@ class Cart66AuthorizeNet extends Cart66GatewayAbstract {
         $this->response_string = urldecode(curl_exec($ch)); 
 
         if (curl_errno($ch)) {
-           $this->response['Response Reason Text'] = curl_error($ch);
+          $this->response['Response Reason Text'] = curl_error($ch);
         }
         else {
           curl_close ($ch);
@@ -157,8 +182,8 @@ class Cart66AuthorizeNet extends Cart66GatewayAbstract {
         // $this->dump_response();
         
         // Prepare to return the transaction id for this sale.
-        if($this->response['Response Code'] == 1) {
-          $sale = $this->response['Transaction ID'];
+        if(str_replace('"',"",$this->response['Response Code']) == 1) {
+          $sale = str_replace('"',"",$this->response['Transaction ID']);
         }
       }
       else {
@@ -179,7 +204,8 @@ class Cart66AuthorizeNet extends Cart66GatewayAbstract {
    }
    
    public function getTransactionResponseDescription() {
-     $description = $this->getResponseReasonText();
+     $description['errormessage'] = $this->getResponseReasonText();
+     $description['errorcode'] = $this->response['Response Reason Code'];
      $this->_logFields();
      $this->_logResponse();
      return $description;

@@ -12,7 +12,7 @@
 	define(	"REZGO_DIR",								strstr(preg_replace('/(https?\:\/\/)/', '', WP_PLUGIN_URL), '/').'/rezgo-online-booking');
 		
 	// this directive is defined in rezgo.php rezgo_set_globals() to capture the current dir
-	//define( "REZGO_URL_BASE",				""																						);
+	//define( "REZGO_URL_BASE",					""																						);
 	
 	define( "REZGO_TEMPLATE", 					get_option('rezgo_template') 									);
 		
@@ -30,6 +30,12 @@
 	define( "REZGO_XML_VERSION",				'current'																			);
 	
 	define(	"REZGO_HIDE_HEADERS",				1																							);
+	
+	// toggle the inclusion of the install path or the absolute document root (needed for wordpress)
+	define( "REZGO_USE_ABSOLUTE_PATH",	1																							);
+	
+	// identify the origin of all requests coming from this parser, this directive is optional
+	define( "REZGO_PARSER_IDENTITY",		'wp-1.6-'.site_url()													);
 		
 	/* 
 		---------------------------------------------------------------------------

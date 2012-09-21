@@ -20,7 +20,7 @@
 			// Register the command so that it can be invoked by using tinyMCE.activeEditor.execCommand('mceExample');
 			ed.addCommand('mcephproduct', function() {
 				ed.windowManager.open({
-					file : url + '/cart66Dialog.php',
+					file : wpurl + '?cart66dialog=1', // wpurl is home_url( '/' )
 					width : 500,
 					height : 255 + (tinyMCE.isNS7 ? 20 : 0) + (tinyMCE.isMSIE ? 0 : 0),
 					inline : 1
@@ -45,9 +45,9 @@
 		getInfo : function() {
 			return {
 				longname : 'Cart66',
-				author : 'Andre Fredette',
-				authorurl : 'http://www.phpoet.com/',
-				infourl : 'http://www.phpoet.com/',
+				author : 'Reality66',
+				authorurl : 'http://cart66.com/',
+				infourl : 'http://cart66.com/',
 				version : "1.0"
 			};
 		}

@@ -95,7 +95,7 @@ class SpreedlyCreditCard {
       $this->_errors[] = 'Invalid credit card year';
     }
     else {
-      $today = strtotime('now');
+      $today = strtotime('now', Cart66Common::localTs());
       $expDate = strtotime($this->_cardData['month'] . '/28/' . $this->_cardData['year']);
       if($today >= $expDate) {
         $isValid = false;
@@ -117,7 +117,7 @@ class SpreedlyCreditCard {
   
   public function validateCardType() {
     $isValid = true;
-    $validTypes = array('visa', 'mastercard', 'discover', 'american_express');
+    $validTypes = array('visa', 'master', 'discover', 'american_express');
     if(!in_array($this->_cardData['card-type'], $validTypes)) {
       $isValid = false;
       $this->_errors[] = 'Invalid card type';
@@ -166,7 +166,16 @@ class SpreedlyCreditCard {
   public function hydrateFromCheckout() {
     $this->resetCardData();
     $this->number = $_POST['payment']['cardNumber'];
-    $this->cardType = strtolower($_POST['payment']['cardType']);
+    $adjustedCardType = strtolower($_POST['payment']['cardType']);
+    Cart66Common::log('[' . basename(__FILE__) . ' - line ' . __LINE__ . "] Original Spreedly cardType: " . $adjustedCardType);
+    if($adjustedCardType == "amex"){ 
+      $adjustedCardType = "american_express"; 
+    }
+    if($adjustedCardType == "mastercard"){ 
+      $adjustedCardType = "master"; 
+    }
+    Cart66Common::log('[' . basename(__FILE__) . ' - line ' . __LINE__ . "] Adjusted Spreedly cardType: ". $adjustedCardType);
+    $this->cardType = $adjustedCardType;
     $this->verificationValue = $_POST['payment']['securityId'];
     $this->month = $_POST['payment']['cardExpirationMonth'];
     $this->year = $_POST['payment']['cardExpirationYear'];

@@ -7,12 +7,12 @@
 			<? if($_COOKIE['rezgo_promo']) { ?>
 			<div id="promo_entered_sidebar" class="promo_entered_sidebar">
 				<?=$_COOKIE['rezgo_promo']?>
-				<a href="javascript:void(0);" onclick="$('#promo_entered_sidebar').hide(); $('#promo_hidden_sidebar').fadeIn();">[change]</a>
+				<a href="javascript:void(0);" onclick="jQuery('#promo_entered_sidebar').hide(); jQuery('#promo_hidden_sidebar').fadeIn();">[change]</a>
 			</div>
 			<? } ?>
 			
 			<div id="promo_hidden_sidebar" class="promo_hidden_sidebar" <? if($_COOKIE['rezgo_promo']) { ?>style="display:none;"<? } ?>>
-				<form class="item" onsubmit="document.location.href = '<?=$_SERVER['REQUEST_URI']?><?=((strpos($_SERVER['REQUEST_URI'], '?') !== false) ? '&' : '?')?>promo=' + $('#promo_sidebar').val() + '<? if($_REQUEST[date]) { ?>#book<? } ?>'; return false;">
+				<form class="item" onsubmit="document.location.href = '<?=$_SERVER['REQUEST_URI']?><?=((strpos($_SERVER['REQUEST_URI'], '?') !== false) ? '&' : '?')?>promo=' + jQuery('#promo_sidebar').val() + '<? if($_REQUEST[date]) { ?>#book<? } ?>'; return false;">
 		  		<input type="text" class="promo_input_sidebar" name="promo" id="promo_sidebar" value="<?=$_COOKIE['rezgo_promo']?>">
 					<input type="submit" class="promo_submit_sidebar" value="apply">
 				</form>
@@ -43,15 +43,15 @@
 				close_overlay();
 				
 				// this it the loading graphic
-				$('#calendar_content').html('<table border=0 cellspacing=0 cellpadding=0 id="calendar_container" class="calendar_load"><tr><td align=center valign=center><img src="<?=$site->path?>/images/loader.gif"></td></tr></table>');
+				jQuery('#calendar_content').html('<table border=0 cellspacing=0 cellpadding=0 id="calendar_container" class="calendar_load"><tr><td align=center valign=center><img src="<?=$site->path?>/images/loader.gif"></td></tr></table>');
 				
-				$('#calendar_content').load('<?=$site->base?>/calendar.php?' + url);
+				jQuery('#calendar_content').load('<?=$site->base?>/calendar.php?' + url);
 			}
 			
 			function close_overlay() {
 				// this function closes all overlays attached to a[rel] in #calendar_container
-				$("#calendar_container a[rel]").each(function() {
-					$(this).overlay().close();
+				jQuery("#calendar_container a[rel]").each(function() {
+					jQuery(this).overlay().close();
 				});
 			
 				// it also closes the "click to book" arrow, the fadein below acts after it
@@ -60,31 +60,30 @@
 			}
 			
 			function remove_arrow() {
-				$('#calendar_marker').fadeOut();
+				jQuery('#calendar_marker').fadeOut();
 			}
 		
 			function next_cal_page(date, totalPages) {
-				var current_page = $('#page_' + date).html();
+				var current_page = jQuery('#page_' + date).html();
 				if(current_page < totalPages) {
-					$('#cal_page_' + date + '_' + current_page).hide();
-					$('#cal_page_' + date + '_' + ++current_page).fadeIn();
-					$('#page_' + date).html(current_page);
+					jQuery('#cal_page_' + date + '_' + current_page).hide();
+					jQuery('#cal_page_' + date + '_' + ++current_page).fadeIn();
+					jQuery('#page_' + date).html(current_page);
 				}
 			}
 			
 			function prev_cal_page(date, totalPages) {
-				var current_page = $('#page_' + date).html();
+				var current_page = jQuery('#page_' + date).html();
 				if(current_page > 1) {
-					$('#cal_page_' + date + '_' + current_page).hide();
-					$('#cal_page_' + date + '_' + --current_page).fadeIn();
-					$('#page_' + date).html(current_page);
+					jQuery('#cal_page_' + date + '_' + current_page).hide();
+					jQuery('#cal_page_' + date + '_' + --current_page).fadeIn();
+					jQuery('#page_' + date).html(current_page);
 				}
 			}	
 			
-			// load the first calendar with jump=1 so the calendar will attempt to find an active month
-			change_cal('item_id=<?=$item->uid?>&date=<?=$_REQUEST['date']?>&jump=1');	
+			change_cal('item_id=<?=$item->uid?>&date=<?=$_REQUEST['date']?>');
 		
-			$('#calendar_marker').delay(800).fadeIn();
+			jQuery('#calendar_marker').delay(800).fadeIn();
 		</script>
 	  
 	</div>

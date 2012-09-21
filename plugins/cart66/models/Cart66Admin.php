@@ -22,18 +22,31 @@ class Cart66Admin {
       Cart66Common::log('[' . basename(__FILE__) . ' - line ' . __LINE__ . "] Not loading Spreedly data because Spreedly class has not been loaded");
     }
     
-    if(class_exists('Cart66PayPalSubscription')) {
-      $ppsub = new Cart66PayPalSubscription();
-      $data['ppsubs'] = $ppsub->getModels('where id>0', 'order by name');
-    }
-    
     $data['subscriptions'] = $subscriptions;
     $view = Cart66Common::getView('admin/products.php', $data);
-    echo $view; 
+    echo $view;
   }
   
   public function settingsPage() {
-    $view = Cart66Common::getView('admin/settings.php');
+    $tabs = array(
+      'main' => array('tab' => 'Main', 'title' => ''),
+      'tax' => array('tab' => 'Tax', 'title' => ''),
+      'cart_checkout' => array('tab' => 'Cart & Checkout', 'title' => ''),
+      'gateways' => array('tab' => 'Gateways', 'title' => ''),
+      'notifications' => array('tab' => 'Notifications', 'title' => ''),
+      'integrations' => array('tab' => 'Integrations', 'title' => ''),
+      'debug' => array('tab' => 'Debug', 'title' => '')
+    );
+    $setting = new Cart66Setting($tabs);
+    $data = array(
+      'setting' => $setting
+    );
+    $view = Cart66Common::getView('admin/settings.php', $data);
+    echo $view;
+  }
+  
+  public function notificationsPage() {
+    $view = Cart66Common::getView('admin/notifications.php');
     echo $view;
   }
   
@@ -42,15 +55,65 @@ class Cart66Admin {
       $order = new Cart66Order($_GET['id']);
       $view = Cart66Common::getView('admin/order-view.php', array('order'=>$order)); 
     }
+    elseif($_SERVER['REQUEST_METHOD'] == 'POST' && Cart66Common::postVal('task') == 'resend email receipt') {
+      if(CART66_PRO && Cart66Setting::getValue('enable_advanced_notifications') == 1) {
+        $notify = new Cart66AdvancedNotifications($_POST['order_id']);
+        $notify->sendAdvancedEmailReceipts(false);
+      }
+      else {
+        $notify = new Cart66Notifications($_POST['order_id']);
+        $notify->sendEmailReceipts();
+      }
+      $order = new Cart66Order($_POST['order_id']);
+      $view = Cart66Common::getView('admin/order-view.php', array('order'=>$order, 'resend'=>true));
+    }
+    elseif($_SERVER['REQUEST_METHOD'] == 'POST' && Cart66Common::postVal('task') == 'reset download amount') {
+      $product = new Cart66Product();
+      $product->resetDownloadsForDuid($_POST['duid'], $_POST['order_item_id']);
+      $order = new Cart66Order($_POST['order_id']);
+      $view = Cart66Common::getView('admin/order-view.php', array('order'=>$order));
+    }
     elseif($_SERVER['REQUEST_METHOD'] == 'GET' && Cart66Common::getVal('task') == 'delete') {
       $order = new Cart66Order($_GET['id']);
       $order->deleteMe();
       $view = Cart66Common::getView('admin/orders.php'); 
     }
+    elseif($_SERVER['REQUEST_METHOD'] == 'POST' && Cart66Common::postVal('remove') && Cart66Common::postVal('remove') != 'all') {
+      $order = new Cart66Order($_GET['id']);
+      Cart66AdvancedNotifications::removeTrackingNumber($order);
+      $order = new Cart66Order($_GET['id']);
+      $view = Cart66Common::getView('admin/order-view.php', array('order'=>$order));
+    }
+    elseif($_SERVER['REQUEST_METHOD'] == 'POST' && Cart66Common::postVal('remove') == 'all') {
+      $order = new Cart66Order($_GET['id']);
+      $order->updateTracking(null);
+      $order = new Cart66Order($_GET['id']);
+      $view = Cart66Common::getView('admin/order-view.php', array('order'=>$order));
+    }
     elseif($_SERVER['REQUEST_METHOD'] == 'POST' && Cart66Common::postVal('task') == 'update order status') {
       $order = new Cart66Order($_POST['order_id']);
-      $order->updateStatus(Cart66Common::postVal('status'));
+      //$order->updateStatus(Cart66Common::postVal('status'));
+      //$order->updateNotes($_POST['notes']);
+      $data = array(
+        'status' => Cart66Common::postVal('status'),
+        'notes' => Cart66Common::postVal('notes')
+      );
+      $order->setData($data);
+      $order->save();
+      if(Cart66Common::postVal('send_email_status_update') && CART66_PRO) {
+        Cart66AdvancedNotifications::addTrackingNumbers($order);
+        $status = Cart66Common::postVal('status');
+        if(Cart66Setting::getValue('status_options') != null) {
+          $notify = new Cart66AdvancedNotifications($_POST['order_id']);
+          $notify->sendStatusUpdateEmail($status);
+        }
+      }
+      elseif(CART66_PRO) {
+        Cart66AdvancedNotifications::addTrackingNumbers($order);
+      }
       $view = Cart66Common::getView('admin/orders.php');
+      //$order = new Cart66Order($_POST['order_id']);
+      //$view = Cart66Common::getView('admin/order-view.php', array('order'=>$order));
     }
     else {
       $view = Cart66Common::getView('admin/orders.php'); 
@@ -73,7 +136,6 @@ class Cart66Admin {
     $view = Cart66Common::getView('admin/shipping.php');
     echo $view;
   }
-
 
   public function reportsPage() {
     $view = Cart66Common::getView('admin/reports.php');
@@ -120,7 +182,7 @@ class Cart66Admin {
         }
       }
 
-      $data['plans'] = $sub->getModels('where is_paypal_subscription>0', 'order by name');
+      $data['plans'] = $sub->getModels('where is_paypal_subscription>0', 'order by name', '1');
       $view = Cart66Common::getView('pro/admin/paypal-subscriptions.php', $data);
       echo $view;
     }
@@ -146,11 +208,27 @@ class Cart66Admin {
         }
       }
       elseif(isset($_REQUEST['accountId']) && is_numeric($_REQUEST['accountId'])) {
+        if(isset($_REQUEST['opt_out'])) {
+          $account = new Cart66Account();
+          $account->load($_REQUEST['accountId']);
+          $data = array(
+            'opt_out' => $_REQUEST['opt_out']
+          );
+          $account->setData($data);
+          $account->save();
+          $account->clear();
+        }
         // Look in query string for account id
         $account = new Cart66Account();
         $account->load($_REQUEST['accountId']);
-        $data['plan'] = $account->getCurrentAccountSubscription(true); // Return even if plan is expired
-        $data['activeUntil'] = date('m/d/Y', strtotime($data['plan']->activeUntil));
+        $id = $account->getCurrentAccountSubscriptionId(true);
+        $data['plan'] = new Cart66AccountSubscription($id); // Return even if plan is expired
+        if(date('Y', strtotime($data['plan']->activeUntil)) <= 1970) {
+          $data['activeUntil'] = '';
+        }
+        else {
+          $data['activeUntil'] = date('m/d/Y', strtotime($data['plan']->activeUntil));
+        }
       }
 
       if($_SERVER['REQUEST_METHOD'] == 'POST' && Cart66Common::postVal('cart66-action') == 'save account') {
@@ -174,10 +252,22 @@ class Cart66Admin {
         if($acctData['id'] > 0) {
           $account = new Cart66Account($acctData['id']);
           $account->setData($acctData);
-          $errors = $account->validate();
-
+          $account_errors = $account->validate();
+          
           $sub = new Cart66AccountSubscription($planData['id']);
-          $sub->setData($planData);
+          if($planData['product_id'] != 'spreedly_subscription') {
+            $sub->setData($planData);
+            $subscription_product = new Cart66Product($sub->product_id);
+            $sub->subscription_plan_name = $subscription_product->name;
+            $sub->feature_level = $subscription_product->feature_level;
+            $sub->subscriber_token = '';
+          }
+          else {
+            unset($planData['product_id']);
+            $sub->setData($planData);
+          }
+          $subscription_errors = $sub->validate();
+          $errors = array_merge($account_errors, $subscription_errors);
 
           if(count($errors) == 0) {
             $account->save();
@@ -195,27 +285,43 @@ class Cart66Admin {
           // Creating a new account
           $account = new Cart66Account();
           $account->setData($acctData);
-          $errors = $account->validate();
-          if(count($errors) == 0) {
-            $account->save();
+          $account_errors = $account->validate();
+          
+          if(count($account_errors) == 0){
             $sub = new Cart66AccountSubscription();
-            $planData['account_id'] = $account->id;
-            $sub->setData($planData);
-            $sub->billingFirstName = $account->firstName;
-            $sub->billingLastName = $account->lastName;
-            $sub->billingInterval = 'Manual';
-            $sub->save();
-            $account->clear();
+            $sub->setData($planData); 
+            $subscription_errors = $sub->validate();
+            
+            if(count($subscription_errors) == 0){
+              $account->save();
+
+              $sub->billingFirstName = $account->firstName;
+              $sub->billingLastName = $account->lastName;
+              $sub->billingInterval = 'Manual';
+              $sub->account_id = $account->id;
+              $subscription_product = new Cart66Product($sub->product_id);
+              $sub->subscription_plan_name = $subscription_product->name;
+              $sub->feature_level = $subscription_product->feature_level;
+              $sub->save();
+              $account->clear();
+              $data['just_saved'] = true;
+            }
+            else{
+              $data['errors'] = $subscription_errors;
+            }
+            
           }
+          else{
+            $data['errors'] = $account_errors;
+          }
+          
         }
 
       }
 
       $data['url'] = Cart66Common::replaceQueryString('page=cart66-accounts');
       $data['account'] = $account;
-      $data['accounts'] = $account->getModels('where id>0', 'order by last_name');
     }
-    
     
     $view = Cart66Common::getView('admin/accounts.php', $data);
     echo $view;

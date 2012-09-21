@@ -1,18 +1,6 @@
 <?php
-
-global $wp_db_version;
-
-if(file_exists('abspath.php')){
-  include('abspath.php');
-  if(CART66_ABSPATH !== false) {
-    require_once( CART66_ABSPATH . "wp-load.php");
-  }
-  else {
-    require_once dirname(__FILE__) . '/../../../../wp-load.php';
-  }
-}
-
-
+if ( !defined( 'ABSPATH' ) )
+  die( 'Do not include this file directly' );
 
 $product= new Cart66Product();
 
@@ -22,7 +10,7 @@ $tinyURI = get_bloginfo('wpurl')."/wp-includes/js/tinymce";
 <html xmlns="http://www.w3.org/1999/xhtml">
 <head>
 	<title>Cart66</title>
-	<link type="text/css" rel="stylesheet" href="<?php echo plugins_url()."/cart66"; ?>/js/cart66.css" />
+	<link type="text/css" rel="stylesheet" href="<?php echo CART66_URL; ?>/js/cart66.css" />
 	<script language="javascript" type="text/javascript" src="<?php echo $tinyURI; ?>/tiny_mce_popup.js"></script>
 	<script language="javascript" type="text/javascript" src="<?php echo $tinyURI; ?>/utils/mctabs.js"></script>
 	<script language="javascript" type="text/javascript" src="<?php echo $tinyURI; ?>/utils/form_utils.js"></script>
@@ -34,14 +22,13 @@ $tinyURI = get_bloginfo('wpurl')."/wp-includes/js/tinymce";
 	tinyMCEPopup.onInit.add( function(){window.setTimeout(function(){$jq('#productName').focus();},500);} );
 
 	<?php
-	$prices = '';
-	$types=''; $options='';
+	$prices = array();
+	$types = array(); 
+	$options='';
 	$products = $product->getModels("where id>0", "order by name");
 	if(count($products)):
 	  $i=0;
 	  foreach($products as $p) {
-	    // Only show non-gravity products in this list
-	    if(!$p->isGravityProduct()) {
 	      if($p->itemNumber==""){
           $id=$p->id;
           $type='id';
@@ -52,48 +39,55 @@ $tinyURI = get_bloginfo('wpurl')."/wp-includes/js/tinymce";
           $type='item';
           $description = '(# '.$p->itemNumber.')';
         }
-
-  	    $types .= '"' . htmlspecialchars($type) . '", ';
+        
+  	    $types[] = htmlspecialchars($type);
   	    
   	    if(CART66_PRO && $p->isPayPalSubscription()) {
   	      $sub = new Cart66PayPalSubscription($p->id);
   	      $subPrice = strip_tags($sub->getPriceDescription($sub->offerTrial > 0, '(trial)'));
-  	      $prices .= '"' . htmlspecialchars($subPrice) . '", ';
+  	      $prices[] = htmlspecialchars($subPrice);
   	      Cart66Common::log('[' . basename(__FILE__) . ' - line ' . __LINE__ . "] subscription price in dialog: $subPrice");
   	    }
   	    else {
-  	      $prices .= '"' . htmlspecialchars($p->getPriceDescription()) .'", ';
+  	      $prices[] = htmlspecialchars(strip_tags($p->getPriceDescription()));
   	    }
   	    
   	    
   	    $options .= '<option value="'.$id.'">'.$p->name.' '.$description.'</option>';
   	    $i++;
-	    }
+	    
 	  }
 	
 	else:
 	  $options .= '<option value="">No products</option>';
 	endif;
-	//$types = substr($types,0,-1);
-	echo 'var prodtype=new Array('.$types.'"");';
-	echo 'var prodprices=new Array('.$prices.'"");';
-	?>
+	 
+	 $prodTypes = implode("\",\"",$types);
+	 $prodPrices = implode("\",\"", $prices);
+  ?>
+  
+  var prodtype = new Array("<?php echo $prodTypes; ?>");
+  var prodprices = new Array("<?php echo $prodPrices; ?>");
+  
+ 
 
 	function init() {
 		mcTabs.displayTab('tab', 'panel');
 	}
 	
 	function preview(){
-	  var productIndex = $jq("#productName").attr('selectedIndex');
+	   	
+	  var productIndex = jQuery("#productNameSelector option:selected").index();
 	  
-	  var price = "<p style='margin-top:2px;'><label id='priceLabel'>"+prodprices[productIndex]+"</label></p>";
-	  if($jq("input[@name='showPrice']:checked").val()=="no"){
+	  var priceDescription = jQuery("<div/>").html(prodprices[productIndex]).text();
+    var price = "<p style='margin-top:2px;'><label id='priceLabel'>" + priceDescription + "</label></p>";
+	  if(jQuery("input[@name='showPrice']:checked").val()=="no"){
 	    price = "";
 	  }
 	  
 	  var style = "";
-	  if($jq("#productStyle").val()!="") {
-	    style = $jq("#productStyle").val();
+	  if(jQuery("#productStyle").val()!="") {
+	    style = jQuery("#productStyle").val();
 	  }
 	  
     <?php 
@@ -111,13 +105,13 @@ $tinyURI = get_bloginfo('wpurl')."/wp-includes/js/tinymce";
 
     <?php if($cartImgPath): ?>
       var buttonPath = '<?php echo $buttonPath ?>';
-      button = "<img src='"+buttonPath+"' title='Add to Cart' alt='Cart66 Add To Cart Button'>";
+      button = "<img src='"+buttonPath+"' title='<?php _e( 'Add to Cart' , 'cart66' ); ?>' alt='<?php _e( 'Cart66 Add To Cart Button' , 'cart66' ); ?>'>";
     <?php else: ?>
-      button = "<input type='button' class='Cart66ButtonPrimary' value='Add To Cart' />";
+      button = "<input type='button' class='Cart66ButtonPrimary' value='<?php _e( 'Add To Cart' , 'cart66' ); ?>' />";
     <?php endif; ?>
 
 	  if($jq("#buttonImage").val()!=""){
-	    button = "<img src='"+$jq("#buttonImage").val()+"' title='Add to Cart' alt='Cart66 Add To Cart Button'>";
+	    button = "<img src='"+jQuery("#buttonImage").val()+"' title='<?php _e( 'Add to Cart' , 'cart66' ); ?>' alt='<?php _e( 'Cart66 Add To Cart Button' , 'cart66' ); ?>'>";
 	  } 
     
     if($jq("input[@name='showPrice']:checked").val()=="only"){
@@ -126,11 +120,11 @@ $tinyURI = get_bloginfo('wpurl')."/wp-includes/js/tinymce";
     
     var prevBox = "<div style='"+style+"'>"+price+button+"</div>";
 	  
-	  $jq("#buttonPreview").html(prevBox);
+	  jQuery("#buttonPreview").html(prevBox).text();
 	}
 
 	function insertProductCode() {
-		prod  = $jq("#productName").val();
+		prod  = jQuery("#productNameSelector option:selected").val();
 
     showPrice = $jq("input[@name='showPrice']:checked").val();
     if(showPrice == 'no') {
@@ -148,7 +142,7 @@ $tinyURI = get_bloginfo('wpurl')."/wp-includes/js/tinymce";
       buttonImage = 'img="' + $jq("#buttonImage").val() + '"';
     }
 
-		type =  prodtype[$jq("#productName").attr("selectedIndex")];
+		type =  prodtype[jQuery("#productNameSelector option:selected").index()];
 		if($jq("#productStyle").val()!=""){
 		  style  = 'style="'+$jq("#productStyle").val()+'"';
 		}
@@ -191,10 +185,15 @@ $tinyURI = get_bloginfo('wpurl')."/wp-includes/js/tinymce";
 	  tinyMCEPopup.close();
 	}
 	
-	$jq(document).ready(function(){
+	jQuery(document).ready(function(){
 	  preview();
-	  $jq("input").change(function(){preview();});
-	  $jq("input").click(function(){preview();});
+	  jQuery("input").change(function(){preview();});
+	  jQuery("input").click(function(){preview();});
+	  
+	  
+	  jQuery("#productNameSelector").change(function(){
+	    preview();
+	  })
 	})
 	
 	//-->
@@ -216,6 +215,24 @@ $tinyURI = get_bloginfo('wpurl')."/wp-includes/js/tinymce";
     padding: 5px;
     border-spacing: 0px;
   }
+  .smallText{
+    font-size:11px;
+    text-decoration:underline;
+    cursor:pointer;
+  }
+  .gfProductMessage{
+    display:none;
+    position:absolute;
+    background-color:#fff;
+    border:1px solid;
+    font-size:12px;
+    padding:0px 15px;
+    width:430px;
+    margin:-10px 0px 0px 0px;
+  }
+  .closeMessage{
+    font-size:14px;
+  }
 	</style>
 </head>
 <body id="cart66" onLoad="tinyMCEPopup.executeOnLoad('init();');" style="display: none">
@@ -228,17 +245,18 @@ $tinyURI = get_bloginfo('wpurl')."/wp-includes/js/tinymce";
 	</div>
 	<div class="panel_wrapper">
 		<div id="panel" class="panel current">
+		  
 			<table border="0" cellspacing="0" cellpadding="2">
 				<tr>
-					<td class="phplabel"><label for="productName"><?php  _e('Your products:'); ?></label></td>
-					<td class="phpinput"><select id="productName" name="productName" onchange="preview();"><?php  echo $options; ?></select>
+					<td class="phplabel"><label for="productNameSelector"><?php  _e('Your products'); ?>:</label></td>
+					<td class="phpinput"><select id="productNameSelector" name="productName"><?php echo $options; ?></select><br>
 				</tr>
 				<tr>
-				  <td class="phplabel"><label for="productStyle"><?php  _e('CSS style:'); ?></label></td>
+				  <td class="phplabel"><label for="productStyle"><?php  _e('CSS style'); ?>:</label></td>
 				  <td class="phpinput"><input id="productStyle" name="productStyle" size="34"></td>
 				</tr>
 				<tr>
-				  <td class="phplabel"><label for="showPrice"><?php  _e('Show price:'); ?></label></td>
+				  <td class="phplabel"><label for="showPrice"><?php  _e('Show price'); ?>:</label></td>
           <td class="phpinput">
             <input type='radio' style="border: none;" id="showPrice" name="showPrice" value='yes' checked> Yes
             <input type='radio' style="border: none;" id="showPrice" name="showPrice" value='no'> No
@@ -246,11 +264,11 @@ $tinyURI = get_bloginfo('wpurl')."/wp-includes/js/tinymce";
           </td>
 				</tr>
 				<tr>
-				  <td class="phplabel"><label for="buttonImage"><?php  _e('Button path:'); ?></label></td>
+				  <td class="phplabel"><label for="buttonImage"><?php  _e('Button path'); ?>:</label></td>
 				  <td class="phpinput"><input id="buttonImage" name="buttonImage" size="34"></td>
 				</tr>
 				<tr>
-				  <td class="phplabel" valign="top"><label for="buttonImage"><?php  _e('Preview:'); ?></label></td>
+				  <td class="phplabel" valign="top"><label for="buttonImage"><?php  _e('Preview'); ?>:</label></td>
 				  <td class="" valign="top" id="buttonPreview"> 
 				  </td>
 				</tr>
@@ -314,9 +332,24 @@ $tinyURI = get_bloginfo('wpurl')."/wp-includes/js/tinymce";
           <td><div class="shortcode" onclick="shortcode('checkout_authorizenet');"><a title="Insert [checkout_authorizenet]">[checkout_authorizenet]</a></div></td>
           <td>Authorize.net (or AIM compatible gateway) checkout form</td>
         </tr>
+        <tr>
+          <td><div class="shortcode" onclick="shortcode('checkout_eway');"><a title="Insert [checkout_eway]">[checkout_eway]</a></div></td>
+          <td>Eway checkout form</td>
+        </tr>
+        <tr>
+          <td><div class="shortcode" onclick="shortcode('checkout_mwarrior');"><a title="Insert [checkout_mwarrior]">[checkout_mwarrior]</a></div></td>
+          <td>Merchant Warrior checkout form</td>
+        </tr>
+        <tr>
+          <td><div class="shortcode" onClick="shortcode('checkout_payleap');"><a title="Insert [checkout_mwarrior]">[checkout_payleap]</a></div></td>
+          <td>PayLeap checkout form</td>
+        </tr>
         <?php endif; ?>
         
-        
+        <tr>
+          <td><div class="shortcode" onclick="shortcode('checkout_mijireh');"><a title="Insert [checkout_mijireh]">[checkout_mijireh]</a></div></td>
+          <td>Mijireh Checkout (Accept Credit Cards - PCI Compliant)</td>
+        </tr>
         <tr>
           <td><div class="shortcode" onclick="shortcode('checkout_manual');"><a title="Insert [checkout_manual]">[checkout_manual]</a></div></td>
           <td>Checkout form that does not process credit cards</td>
@@ -346,6 +379,10 @@ $tinyURI = get_bloginfo('wpurl')."/wp-includes/js/tinymce";
         
         <?php if(CART66_PRO): ?>
         <tr>
+          <td><div class="shortcode" onclick="shortcode('email_opt_out');"><a title="Insert [email_opt_out]">[email_opt_out]</a></div></td>
+          <td>Allow Cart66 members to opt out of receiving notifications about the status of their account.</td>
+        </tr>
+        <tr>
           <td><div class="shortcode" onclick="shortcode('hide_from level');"><a title="Insert [hide_from]">[hide_from level=""]</a></div></td>
           <td>Hide content from members without the listed feature levels - opposite of [show_to]</td>
         </tr>
@@ -359,6 +396,10 @@ $tinyURI = get_bloginfo('wpurl')."/wp-includes/js/tinymce";
 
 
         <?php if(CART66_PRO): ?>
+        <tr>
+          <td><div class="shortcode" onclick="shortcode('terms_of_service');"><a title="Insert [terms_of_service]">[terms_of_service]</a></div></td>
+          <td>Show the terms of service agreement.</td> 
+        </tr>
         <tr>
           <td><div class="shortcode" onclick="shortcode('show_to');"><a title="Insert [show_to]">[show_to]</a></div></td>
           <td>Show content only to members with the listed feature levels - opposite of [hide_from]</td>
@@ -398,7 +439,7 @@ $tinyURI = get_bloginfo('wpurl')."/wp-includes/js/tinymce";
           <td>Shows the customer's receipt after a successful sale <br/>Belongs on system page store/receipt</td>
         </tr>
         
-        <?php if(CART66_PRO && false): ?>
+        <?php if(CART66_PRO): ?>
         <tr>
           <td><div class="shortcode" onclick="shortcode('spreedly_listener');"><a title="Insert [spreedly_listener]">[spreedly_listener]</a></div></td>
           <td>Listens for spreedly account changes <br/>Belongs on system page store/spreedly</td>
@@ -419,12 +460,13 @@ $tinyURI = get_bloginfo('wpurl')."/wp-includes/js/tinymce";
 	</div>
 </form>
 
-<script language="javascript">
-jQuery.noConflict();
-jQuery(document).ready(function($){
-  $(".66altColor tr:even").css("background-color", "#fff");
-  $(".66altColor tr:odd").css("background-color", "#eee");
-});
+<script type="text/javascript">
+  (function($){
+    $(document).ready(function(){
+      $(".66altColor tr:even").css("background-color", "#fff");
+      $(".66altColor tr:odd").css("background-color", "#eee");
+    })
+  })(jQuery);
 </script>
 </body>
 </html>

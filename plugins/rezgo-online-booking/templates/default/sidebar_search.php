@@ -7,12 +7,12 @@
 			<? if($_SESSION['rezgo_promo']) { ?>
 			<div id="promo_entered_sidebar" class="promo_entered_sidebar">
 				<?=$_SESSION['rezgo_promo']?>
-				<a href="javascript:void(0);" onclick="$('#promo_entered_sidebar').hide(); $('#promo_hidden_sidebar').fadeIn();">[change]</a>
+				<a href="javascript:void(0);" onclick="jQuery('#promo_entered_sidebar').hide(); jQuery('#promo_hidden_sidebar').fadeIn();">[change]</a>
 			</div>
 			<? } ?>
 			
 			<div id="promo_hidden_sidebar" class="promo_hidden_sidebar" <? if($_SESSION['rezgo_promo']) { ?>style="display:none;"<? } ?>>
-				<form class="item" onsubmit="document.location.href = '<?=$_SERVER['REQUEST_URI']?><?=((strpos($_SERVER['REQUEST_URI'], '?') !== false) ? '&' : '?')?>promo=' + $('#promo_sidebar').val(); return false;">
+				<form class="item" onsubmit="document.location.href = '<?=$_SERVER['REQUEST_URI']?><?=((strpos($_SERVER['REQUEST_URI'], '?') !== false) ? '&' : '?')?>promo=' + jQuery('#promo_sidebar').val(); return false;">
 		  		<input type="text" class="promo_input_sidebar" name="promo" id="promo_sidebar" value="<?=$_SESSION['rezgo_promo']?>">
 					<input type="submit" class="promo_submit_sidebar" value="apply">
 				</form>
@@ -24,7 +24,7 @@
 	<div id="right_search">
 		<h1>Search by Keyword</h1>
 			
-		<form class=item onsubmit="document.location.href='<?=$site->base?>/keyword/'+$('#search_for').val(); return false;">
+		<form class=item onsubmit="document.location.href='<?=$site->base?>/keyword/'+jQuery('#search_for').val(); return false;">
 			<input type="text" id="search_for" name="search_for" class="keyword_search" value="<?=stripslashes(htmlentities($_REQUEST['search_for']))?>" />
 			<input class="btn_search" type=submit value="find">
 		</form>

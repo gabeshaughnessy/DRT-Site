@@ -46,18 +46,18 @@
 	<? } ?>
 
 	<script>
-		$(":date").dateinput({ trigger: true, format: 'mmmm dd, yyyy', min: -1 })
+		jQuery(":date").dateinput({ trigger: true, format: 'mmmm dd, yyyy', min: -1 })
 		
 		// use the same callback for two different events. possible with bind
-		$(":date").bind("onShow onHide", function()  {
-			$(this).parent().toggleClass("active"); 
+		jQuery(":date").bind("onShow onHide", function()  {
+			jQuery(this).parent().toggleClass("active"); 
 		});
 		
 		// when first date input is changed
-		$(":date:first").data("dateinput").change(function() {
+		jQuery(":date:first").data("dateinput").change(function() {
 				
 			// we use it's value for the seconds input min option
-			$(":date:last").data("dateinput").setMin(this.getValue(), true);
+			jQuery(":date:last").data("dateinput").setMin(this.getValue(), true);
 		});
 	</script>
 	
@@ -170,10 +170,10 @@
 		     		<script>
 		     			
 		     		
-		     			if($.browser.msie && $.browser.version < 8) {
-		     				$("#day_<?=$day->id?> a[rel]").overlay({closeOnClick: true});
+		     			if(jQuery.browser.msie && jQuery.browser.version < 8) {
+		     				jQuery("#day_<?=$day->id?> a[rel]").overlay({closeOnClick: true});
 		     			} else {
-		     				$("#day_<?=$day->id?> a[rel]").overlay({effect: 'apple', closeOnClick: true});
+		     				jQuery("#day_<?=$day->id?> a[rel]").overlay({effect: 'apple', closeOnClick: true});
 		     			}
 		     		</script>
 							
@@ -189,20 +189,20 @@
  	
  	<script>
 		function next_cal_page(date, id, totalPages) {
-			var current_page = $('#page_' + id + '_' + date).html();
+			var current_page = jQuery('#page_' + id + '_' + date).html();
 			if(current_page < totalPages) {
-				$('#cal_page_' + id + '_' + date + '_' + current_page).hide();
-				$('#cal_page_' + id + '_' + date + '_' + ++current_page).fadeIn();
-				$('#page_' + id + '_' + date).html(current_page);
+				jQuery('#cal_page_' + id + '_' + date + '_' + current_page).hide();
+				jQuery('#cal_page_' + id + '_' + date + '_' + ++current_page).fadeIn();
+				jQuery('#page_' + id + '_' + date).html(current_page);
 			}
 		}
 		
 		function prev_cal_page(date, id, totalPages) {
-			var current_page = $('#page_' + id + '_' + date).html();
+			var current_page = jQuery('#page_' + id + '_' + date).html();
 			if(current_page > 1) {
-				$('#cal_page_' + id + '_' + date + '_' + current_page).hide();
-				$('#cal_page_' + id + '_' + date + '_' + --current_page).fadeIn();
-				$('#page_' + id + '_' + date).html(current_page);
+				jQuery('#cal_page_' + id + '_' + date + '_' + current_page).hide();
+				jQuery('#cal_page_' + id + '_' + date + '_' + --current_page).fadeIn();
+				jQuery('#page_' + id + '_' + date).html(current_page);
 			}
 		}
 	</script>

@@ -12,7 +12,7 @@ class Cart66PayPalIpn {
     Cart66Common::log("Validate PayPal Post Data: \n" . print_r($rawPost, true));
     
     // Looking for local test IPNs
-    if($rawPost['test_ipn'] == '66') {
+    if(isset($rawPost['test_ipn']) && $rawPost['test_ipn'] == '66') {
       $isValid = true;
     }
     else {

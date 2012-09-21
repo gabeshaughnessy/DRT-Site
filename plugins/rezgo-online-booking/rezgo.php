@@ -4,7 +4,7 @@
 		Plugin Name: Rezgo Online Booking
 		Plugin URI: http://wordpress.org/extend/plugins/rezgo-online-booking/
 		Description: Connect WordPress to your Rezgo account and accept online bookings directly on your website.
-		Version: 1.5
+		Version: 1.6
 		Author: Rezgo
 		Author URI: http://www.rezgo.com
 		License: Modified BSD
@@ -135,7 +135,11 @@
 			
 			// wordpress only, booking redirect page for AJAX
 			'(.+?)/book_ajax(.php)?/?$'
-			=> 'index.php?pagename=$matches[1]&rezgo_page=book_ajax'			
+			=> 'index.php?pagename=$matches[1]&rezgo_page=book_ajax',
+			
+			// wordpress only, payment redirect page for iframe
+			'(.+?)/booking_payment(.php)?/?$'
+			=> 'index.php?pagename=$matches[1]&rezgo_page=booking_payment'			
 			
 		);
 	
@@ -166,7 +170,7 @@
 			$_REQUEST[$k] = urldecode($v);
 		}
 		
-		// extract the wordpress install path, in case we are in a subdirector
+		// extract the wordpress install path, in case we are in a subdirectory
 		$res = str_replace('://', '', get_bloginfo('url'));
 		$res = strstr($res, '/');
 		define("REZGO_URL_BASE",					(($wp_current_page) ? $res."/".$wp_current_page : $res));
@@ -240,6 +244,11 @@
 			foreach($_REQUEST as $k => $v) { $string[] = $k.'='.$v; }
 			header("location: ".REZGO_DIR.'/calendar.php?'.implode("&", $string));
 			exit;
+		} elseif($_REQUEST['rezgo_page'] == 'booking_payment') {
+			// this payment form page redirects a standard request to a plugin-specific ajax file
+			foreach($_REQUEST as $k => $v) { $string[] = $k.'='.$v; }
+			header("location: ".REZGO_DIR.'/booking_payment.php?'.implode("&", $string));
+			exit;
 		} elseif($_REQUEST['rezgo_page'] == 'book_ajax') {
 			rezgo_display_booking();
 		} else {
@@ -282,12 +291,14 @@
 		$start = ($_REQUEST['pg'] - 1) * REZGO_RESULTS_PER_PAGE;
 		
 		$site->setTourLimit(REZGO_RESULTS_PER_PAGE + 1, $start);
-		
-		$display = $site->getTemplate('header');
 	
-			$display .= $site->getTemplate('index');
+		$display .= '<!-- r.'.base64_encode($site->version.' '.$site->getDomain()).' -->';
 		
-			$display .= $site->getTemplate('sidebar_search');
+		$display .= $site->getTemplate('header');
+		
+		$display .= $site->getTemplate('index');
+	
+		$display .= $site->getTemplate('sidebar_search');
 				
 		$display .= $site->getTemplate('footer');
 		
@@ -339,7 +350,7 @@
 		
 		$display = $site->getTemplate('header');
 		
-			$display .= $site->getTemplate('error');
+		$display .= $site->getTemplate('error');
 		
 		$display .= $site->getTemplate('sidebar_search');
 			
@@ -357,7 +368,7 @@
 		
 		$display = $site->getTemplate('header');
 		
-			$display .= $site->getTemplate('about');
+		$display .= $site->getTemplate('about');
 		
 		$display .= $site->getTemplate('sidebar_search');
 			
@@ -375,7 +386,7 @@
 		
 		$display = $site->getTemplate('header');
 		
-			$display .= $site->getTemplate('terms');
+		$display .= $site->getTemplate('terms');
 		
 		$display .= $site->getTemplate('sidebar_search');
 			
@@ -413,7 +424,7 @@
 		
 		$display = $site->getTemplate('header');
 		
-			$display .= $site->getTemplate('contact');
+		$display .= $site->getTemplate('contact');
 		
 		$display .= $site->getTemplate('sidebar_search');
 			
@@ -431,7 +442,7 @@
 		
 		$display = $site->getTemplate('header');
 		
-			$display .= $site->getTemplate('book');
+		$display .= $site->getTemplate('book');
 			
 		$display .= $site->getTemplate('footer');
 				
@@ -447,7 +458,7 @@
 		
 		$display = $site->getTemplate('header');
 		
-			$display .= $site->getTemplate('booking_complete');
+		$display .= $site->getTemplate('booking_complete');
 			
 		$display .= $site->getTemplate('footer');
 				
@@ -457,7 +468,6 @@
 	function rezgo_display_booking() {
 		
 		global $site, $item;
-		
 		
 		// start a new instance of RezgoSite (in global scope since we are using it in a function)
 		$site = new RezgoSite(secure);
@@ -471,6 +481,8 @@
 			$site->cleanRequest();
 		
 			$result = $site->sendBooking();
+			
+			//echo '<pre>'.print_r($result, 1).'</pre>';
 		
 			if($result->status == 1) {
 			
@@ -500,6 +512,8 @@
 				}
 			}
 		}
+		
+		//die('[['.$response.']]');
 		
 		$site->sendTo(REZGO_DIR.'/book_ajax.php?response='.$response);
 	}

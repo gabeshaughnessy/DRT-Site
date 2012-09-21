@@ -51,7 +51,7 @@ class SpreedlyInvoice {
    *   $result->code
    */
   public function createFromArray(array $invoice) {
-    $xml = SpreedlyCommon::buildXml($invoice, 'invoice');
+    $xml = Cart66Common::arrayToXml($invoice, 'invoice');
     $result = SpreedlyCommon::curlRequest('/invoices.xml', 'post', $xml);
 
     if($result->code == '201') {
@@ -102,7 +102,7 @@ class SpreedlyInvoice {
       throw new SpreedlyException('Spreedly Payment: Trying to pay spreedly invoice without a valid invoice token', 66002);
     }
     
-    $xml = SpreedlyCommon::buildXml($payment, 'payment');
+    $xml = Cart66Common::arrayToXml($payment, 'payment');
     $result = SpreedlyCommon::curlRequest('/invoices/' . $this->_invoiceToken. '/pay.xml', "put", $xml);
     $responseCode = $result->code;
     if(!empty($responseCode)) {

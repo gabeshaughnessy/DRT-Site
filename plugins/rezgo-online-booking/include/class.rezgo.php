@@ -4,7 +4,7 @@
 		This is the Rezgo parser class, it handles processing for the Rezgo XML.
 		
 		VERSION:
-				1.5
+				1.6
 		
 		- Documentation and latest version
 				http://support.rezgo.com/developers/rezgo-open-source-php-parser.html
@@ -18,7 +18,7 @@
 		AUTHOR:
 				Kevin Campbell
 		
-		Copyright (c) 2011, Rezgo (A Division of Sentias Software Corp.)
+		Copyright (c) 2012, Rezgo (A Division of Sentias Software Corp.)
 		All rights reserved.
 		
 		Redistribution and use in source form, with or without modification,
@@ -49,7 +49,7 @@
 
 	class RezgoSite {
 	
-		var $version = '1.5';
+		var $version = '1.6';
 	
 		var $xml_path;
 		
@@ -127,13 +127,21 @@
 			
 			if(!defined(REZGO_PATH)) define("REZGO_PATH", $this->path);
 			
-			// it's possible to define the document root manually if there is an issue with the path generated here
-			// this path must be to the install directory (not just the document root) to support unusual mod_rewrite
-			// installs or wordpress installs that have hidden install paths.
+			// it's possible to define the document root manually if there is an issue with the _SERVER variable
 			if(!defined(REZGO_DOCUMENT_ROOT)) define("REZGO_DOCUMENT_ROOT", $_SERVER["DOCUMENT_ROOT"]);
 			
+			// set the secure mode for this particular page
 			$this->setSecure($secure);
 			
+			// perform some variable filtering
+			if($_REQUEST['start_date']) {
+				if(strtotime($_REQUEST['start_date']) == 0) unset($_REQUEST['start_date']);
+			}
+			if($_REQUEST['end_date']) {
+				if(strtotime($_REQUEST['end_date']) == 0) unset($_REQUEST['end_date']);
+			}
+		
+		
 			// handle the refID if one is set
 			if($_REQUEST['refid'] || $_REQUEST['ttl'] || $_COOKIE['rezgo_refid_val'] || $_SESSION['rezgo_refid_val']) {
 				if($_REQUEST['refid'] || $_REQUEST['ttl']) {
@@ -285,9 +293,9 @@
 		// ------------------------------------------------------------------------------
 		// format a currency response to the standards of this company
 		// ------------------------------------------------------------------------------
-		function formatCurrency($num, &$obj=null) {
+		function formatCurrency($num, &$obj=null, $hide=null) {
 			if(!$obj) $obj = $this->getItem();
-			return $obj->currency_symbol.number_format((float)$num, (int)$obj->currency_decimals, '.', (string)$obj->currency_separator);			
+			return (($hide) ? '' : $obj->currency_symbol).number_format((float)$num, (int)$obj->currency_decimals, '.', (string)$obj->currency_separator);			
 		}
 		
 		// ------------------------------------------------------------------------------
@@ -365,9 +373,10 @@
 					global $$key;
 				} 
 			}
-						
-			//$path = REZGO_DOCUMENT_ROOT.REZGO_DIR.'/templates/'.REZGO_TEMPLATE.'/';
-			$path = REZGO_DOCUMENT_ROOT.'/templates/'.REZGO_TEMPLATE.'/';
+			
+			// wordpress document root includes the install path so we change the path for wordpress installs			
+			$path = ($this->config('REZGO_USE_ABSOLUTE_PATH')) ? REZGO_DOCUMENT_ROOT : REZGO_DOCUMENT_ROOT.REZGO_DIR;
+			$path .= '/templates/'.REZGO_TEMPLATE.'/';
 			
 			$ext = explode(".", $req);
 			$ext = (!$ext[1]) ? '.php' : '';
@@ -389,23 +398,27 @@
 		// general request functions for country lists
 		// ------------------------------------------------------------------------------
 		function countryName($iso) {
+			$path = ($this->config('REZGO_USE_ABSOLUTE_PATH')) ? REZGO_DOCUMENT_ROOT : REZGO_DOCUMENT_ROOT.REZGO_DIR;
+			
 			if(!$this->country_list) {
 				if($this->config('REZGO_COUNTRY_PATH')) {
 					include(REZGO_COUNTRY_PATH);
 				} else {
-					include(REZGO_DOCUMENT_ROOT.'/include/countries_list.php');	
+					include($path.'/include/countries_list.php');	
 				}
 				$this->country_list = $countries_list;
 			}
 			$iso = (string)$iso;
-			return ($this->country_list[$iso]) ? ucfirst($this->country_list[$iso]) : $iso; 
+			return ($this->country_list[$iso]) ? ucwords($this->country_list[$iso]) : $iso; 
 		}
 		
 		function getRegionList($node=null) {
+			$path = ($this->config('REZGO_USE_ABSOLUTE_PATH')) ? REZGO_DOCUMENT_ROOT : REZGO_DOCUMENT_ROOT.REZGO_DIR;
+		
 			if($this->config('REZGO_COUNTRY_PATH')) {
 				include(REZGO_COUNTRY_PATH);
 			} else {
-				include(REZGO_DOCUMENT_ROOT.'/include/countries_list.php');	
+				include($path.'/include/countries_list.php');	
 			}
 			
 			if($node) {
@@ -446,14 +459,17 @@
 		function fetchXML($i) {
 			$file = $this->getPage($i);
 			
+			// sanity check for response, ensure the XML response is valid
+			if(strpos($file, '<!0!>') !== false) return false;
+			
+			// attempt to filter out any junk data
+			$file = strstr($file, '<response');
+			
 			$this->get = utf8_encode($file);
 			
 			$res = $this->xml = simplexml_load_string($this->get);
 			
 			if(!$res && strpos($i, 'i=headers') === false) {
-			
-				die(' -- error');
-			
 				// there has been a fatal error with the XML, report the error to the gateway
 				$this->getPage($i.'&action=report');
 				
@@ -467,6 +483,7 @@
 		}
 		
 		function XMLRequest($i, $arguments=null) {
+		
 			if($i == 'headers') {
 				if(!$this->headers_response) {
 					$query = $this->secure.$this->xml_path.'&i=headers';
@@ -574,7 +591,7 @@
 			// !i=commit
 			if($i == 'commit') {
 				$query = 'https://'.$this->xml_path.'&i=commit&'.$arguments;
-			
+				
 				$xml = $this->fetchXML($query);
 				
 				if($xml) {
@@ -687,11 +704,20 @@
 		function getPaymentMethods($val=null, $a=null) {
 			$this->company_index = ($a) ? (string) $a : 0; // handle multiple company requests for vendor
 			$this->XMLRequest(company);
-			$split = explode(",", $this->company_response[$this->company_index]->payment_methods);
-			foreach((array) $split as $v) {
-				if(trim($v)) $ret[] = trim($v);
-				if($val && $val == trim($v)) { return 1; }
+			
+			if($this->company_response[$this->company_index]->payment->method[0]) {
+				foreach($this->company_response[$this->company_index]->payment->method as $v) {
+					$ret[] = array('name' => (string)$v, 'add' => (string)$v->attributes()->add);
+					if($val && $val == $v) { return 1; }	
+				}
+			} else {
+				$ret[] = array(
+					'name' => (string)$this->company_response[$this->company_index]->payment->method, 
+					'add' => (string)$this->company_response[$this->company_index]->payment->method->attributes()->add
+				);
+				if($val && $val == (string)$this->company_response[$this->company_index]->payment->method) { return 1; }				
 			}
+			
 			// if we made it this far with a $val set, return false
 			if($val) { return false; }
 			else { return $ret; }
@@ -766,9 +792,25 @@
 		}
 		
 		// get a list of calendar data		
-		function getCalendar($item_id, $date=null) {	
-			if(!$date) $date = date("Y-m-15");
-		
+		function getCalendar($item_id, $date=null) {
+			if(!$date) { // no date? set a default date (today)
+				$date = $default_date = strtotime(date("Y-m-15"));
+				$available = ',available'; // get first available date from month XML
+			} else {
+				$date = date("Y-m-15", strtotime($date));
+				$date = strtotime($date);
+			}
+			
+			$promo = ($this->promo_code) ? '&trigger_code='.$this->promo_code : '';	
+			
+			$query = $this->secure.$this->xml_path.'&i=month&q='.$item_id.'&d='.date("Y-m-d", $date).'&a=group'.$available.$promo;	
+			
+			$xml = $this->fetchXML($query);
+			
+			// update the date with the one provided from the XML response
+			// this is done in case we hopped ahead with the XML search (a=available)
+			$date = $xml->year.'-'.$xml->month.'-15';
+			
 			$year = date("Y", strtotime($date));
 			$month = date("m", strtotime($date));
 			
@@ -781,11 +823,6 @@
 			$this->calendar_next = $next_date = date("Y-m-d", strtotime($base_date.' +1 month'));
 			$this->calendar_prev = $prev_date = date("Y-m-d", strtotime($base_date.' -1 month'));
 			
-			$promo = ($this->promo_code) ? '&trigger_code='.$this->promo_code : '';	
-			
-			$query = $this->secure.$this->xml_path.'&i=month&q='.$item_id.'&d='.date("Y-m-d", $date).'&a=group'.$promo;	
-			
-			$xml = $this->fetchXML($query);
 			
 			$this->calendar_name = (string) $xml->name;
 			$this->calendar_com = (string) $xml->com;
@@ -903,8 +940,18 @@
 			return $this->calendar_years;
 		}
 		
-		function getCalendarDays() {
-			return $this->calendar_days;
+		function getCalendarDays($day=null) {
+			if($day) {
+				foreach($this->calendar_days as $v) {
+					if((int)$v->day == $day) {
+						$day_response = $v; break;
+					}
+				}
+				
+				return (object) $day_response;
+			} else {
+				return $this->calendar_days;
+			}
 		}
 		
 		function getCalendarId() {
@@ -923,9 +970,7 @@
 			if(!$a || $a == $_REQUEST) {
 				if($_REQUEST['search_for']) $str .= ($_REQUEST['search_in']) ? '&t='.urlencode($_REQUEST['search_in']) : '&t=smart';	
 				if($_REQUEST['search_for']) $str .= '&q='.urlencode(stripslashes($_REQUEST['search_for']));
-				
-				//if($_REQUEST['tags']) $str .= '&f[tags]=*'.urlencode($_REQUEST['tags']).'*'; // this is support for the old tags
-				if($_REQUEST['tags']) $str .= '&f[tags]='.urlencode($_REQUEST['tags']); // this is support for the new tags
+				if($_REQUEST['tags']) $str .= '&f[tags]=*'.urlencode($_REQUEST['tags']).'*';
 				
 				if($_REQUEST['cid']) $str .= '&f[cid]='.urlencode($_REQUEST['cid']); // vendor only
 				
@@ -1465,8 +1510,10 @@
 		// ------------------------------------------------------------------------------
 		// Create an outgoing commit request based on the _REQUEST data
 		// ------------------------------------------------------------------------------
-		function sendBooking($var=null) {
+		function sendBooking($var=null, $arg=null) {
 			$r = ($var) ? $var : $_REQUEST;
+			
+			if($arg) $res[] = $arg; // extra XML options
 			
 			($r['date']) ? $res[] = 'date='.urlencode($r['date']) : $this->error('commit element "date" is empty', 1);
 			($r['book']) ? $res[] = 'book='.urlencode($r['book']) : $this->error('commit element "book" is empty', 1);
@@ -1483,16 +1530,16 @@
 			($r['price8_num']) ? $res[] = 'price8_num='.urlencode($r['price8_num']) : 0;
 			($r['price9_num']) ? $res[] = 'price9_num='.urlencode($r['price9_num']) : 0;
 			
-			($r['tour_first_name']) ? $res[] = 'tour_first_name='.urlencode($r['tour_first_name']) : $this->error('commit element "tour_first_name" is empty', 1);
-			($r['tour_last_name']) ? $res[] = 'tour_last_name='.urlencode($r['tour_last_name']) : $this->error('commit element "tour_last_name" is empty', 1);
-			($r['tour_address_1']) ? $res[] = 'tour_address_1='.urlencode($r['tour_address_1']) : $this->error('commit element "tour_address_1" is empty', 1);
+			($r['tour_first_name']) ? $res[] = 'tour_first_name='.urlencode($r['tour_first_name']) : 0;
+			($r['tour_last_name']) ? $res[] = 'tour_last_name='.urlencode($r['tour_last_name']) : 0;
+			($r['tour_address_1']) ? $res[] = 'tour_address_1='.urlencode($r['tour_address_1']) : 0;
 			($r['tour_address_2']) ? $res[] = 'tour_address_2='.urlencode($r['tour_address_2']) : 0;
-			($r['tour_city']) ? $res[] = 'tour_city='.urlencode($r['tour_city']) : $this->error('commit element "tour_city" is empty', 1);
+			($r['tour_city']) ? $res[] = 'tour_city='.urlencode($r['tour_city']) : 0;
 			($r['tour_stateprov']) ? $res[] = 'tour_stateprov='.urlencode($r['tour_stateprov']) : 0;
-			($r['tour_country']) ? $res[] = 'tour_country='.urlencode($r['tour_country']) : $this->error('commit element "tour_country" is empty', 1);
-			($r['tour_postal_code']) ? $res[] = 'tour_postal_code='.urlencode($r['tour_postal_code']) : $this->error('commit element "tour_postal_code" is empty', 1);
-			($r['tour_phone_number']) ? $res[] = 'tour_phone_number='.urlencode($r['tour_phone_number']) : $this->error('commit element "tour_phone_number" is empty', 1);
-			($r['tour_email_address']) ? $res[] = 'tour_email_address='.urlencode($r['tour_email_address']) : $this->error('commit element "tour_email_address" is empty', 1);
+			($r['tour_country']) ? $res[] = 'tour_country='.urlencode($r['tour_country']) : 0;
+			($r['tour_postal_code']) ? $res[] = 'tour_postal_code='.urlencode($r['tour_postal_code']) : 0;
+			($r['tour_phone_number']) ? $res[] = 'tour_phone_number='.urlencode($r['tour_phone_number']) : 0;
+			($r['tour_email_address']) ? $res[] = 'tour_email_address='.urlencode($r['tour_email_address']) : 0;
 			
 			if($r['tour_group']) {
 				foreach((array) $r['tour_group'] as $k => $v) {
@@ -1504,7 +1551,7 @@
 					
 						foreach((array) $sv['forms'] as $fk => $fv) {
 							if(is_array($fv)) $fv = implode(", ", $fv); // for multiselects
-							$res[] = 'tour_group['.$k.']['.$sk.'][forms]['.$fk.']='.urlencode($fv);
+							$res[] = 'tour_group['.$k.']['.$sk.'][forms]['.$fk.']='.urlencode(stripslashes($fv));
 						}
 					}		
 				}
@@ -1512,26 +1559,35 @@
 			
 			if($r['tour_forms']) {
 				foreach((array) $r['tour_forms'] as $k => $v) {
-					$res[] = 'tour_forms['.$k.']='.urlencode($v);
+					if(is_array($v)) $v = implode(", ", $v); // for multiselects
+					$res[] = 'tour_forms['.$k.']='.urlencode(stripslashes($v));
 				} 
 			}
 			
 			($r['payment_method']) ? $res[] = 'payment_method='.urlencode($r['payment_method']) : 0;
 			
-			($r['tour_card_name']) ? $res[] = 'tour_card_name='.urlencode($r['tour_card_name']) : 0;
-			($r['tour_card_type']) ? $res[] = 'tour_card_type='.urlencode($r['tour_card_type']) : 0;
-			($r['tour_card_number']) ? $res[] = 'tour_card_number='.urlencode($r['tour_card_number']) : 0;
-			($r['tour_card_expiry_month']) ? $res[] = 'tour_card_expiry_month='.urlencode($r['tour_card_expiry_month']) : 0;
-			($r['tour_card_expiry_year']) ? $res[] = 'tour_card_expiry_year='.urlencode($r['tour_card_expiry_year']) : 0;
-			($r['tour_card_cvv']) ? $res[] = 'tour_card_cvv='.urlencode($r['tour_card_cvv']) : 0;
+			($r['payment_method_add']) ? $res[] = 'payment_method_add='.urlencode($r['payment_method_add']) : 0;
 			
-			($r['agree_terms']) ? $res[] = 'agree_terms='.urlencode($r['agree_terms']) : $this->error('commit element "agree_terms" is empty', 1);
+			($r['payment_method'] == 'Credit Cards' && $r['tour_card_token']) ? $res[] = 'tour_card_token='.urlencode($r['tour_card_token']) : 0;
+			($r['payment_method'] == 'PayPal' && $r['paypal_token']) ? $res[] = 'paypal_token='.urlencode($r['paypal_token']) : 0;
+			($r['payment_method'] == 'PayPal' && $r['paypal_payer_id']) ? $res[] = 'paypal_payer_id='.urlencode($r['paypal_payer_id']) : 0;
+			
+			($r['agree_terms']) ? $res[] = 'agree_terms='.urlencode($r['agree_terms']) : 0;
 			
 			// add in external elements
 			($this->refid) ? $res['refid'] = '&refid='.$this->refid : 0;
 			($this->promo_code) ? $res['promo'] = '&trigger_code='.$this->promo_code : 0;
 			
 			$request = '&'.implode('&', $res);
+			
+			$this->XMLRequest(commit, $request);
+			
+			return $this->commit_response;
+		}
+		
+		// this function is for sending a partial commit request, it does not add any values itself
+		function sendPartialCommit($var=null) {
+			$request = '&'.$var;
 			
 			$this->XMLRequest(commit, $request);
 			

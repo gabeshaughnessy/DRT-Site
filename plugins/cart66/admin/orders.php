@@ -1,54 +1,34 @@
-<?php
+<?php 
   global $wpdb;
   $order = new Cart66Order();
-  $orderRows = $order->getOrderRows();
-  $search = null;
-  if($_SERVER['REQUEST_METHOD'] == 'POST') {
-    if(isset($_POST['cart66-task']) && $_POST['cart66-task'] == 'search orders') {
-      $search = $wpdb->escape($_POST['search']) . '%';
-      $where = "WHERE ship_last_name LIKE '$search' OR bill_last_name LIKE '$search' OR email LIKE '$search' or trans_id LIKE '$search'";
-      $orderRows = $order->getOrderRows($where);
-    }
+  $status = '';
+  if(isset($_GET['status'])) {
+    $status = $_GET['status'];
   }
-  else {
-    if(isset($_GET['status'])) {
-      $status = $wpdb->escape($_GET['status']);
-      $orderRows = $order->getOrderRows("WHERE status='$status'");
-    }
-  }
-  
-  
 ?>
-<h2>Cart66 Orders</h2>
+<h2><?php _e('Cart66 Orders', 'cart66'); ?></h2>
 
-<div class='wrap'>
-  <form class='phorm' action="" method="post">
-    <input type='hidden' name='cart66-task' value='search orders'/>
-    <input type='text' name='search'>
-    <input type='submit' class='button-secondary' value='Search' style='width: auto;'>
-    <br/>
-    <p style="float: left; color: #999; font-size: 11px; margin-top: 0;">Search by last name, email, or order number</p>
-  </form>
+<div class='wrap' style='margin-bottom:60px;'>
   
-  <?php
+ <?php 
     $setting = new Cart66Setting();
     $stats = trim(Cart66Setting::getValue('status_options'));
     if(strlen($stats) >= 1 ) {
       $stats = explode(',', $stats);
   ?>
-      <p style="float: left; clear: both; margin-top:0; padding-top: 0;">Filter Orders:
+      <p style="float: left; clear: both; margin-top:0; padding-top: 0;"><?php _e( 'Filter Orders by Status' , 'cart66' ); ?>:
         <?php
           foreach($stats as $s) {
-            $s = trim($s);
+            $s = trim(strtolower($s));
             Cart66Common::log('[' . basename(__FILE__) . ' - line ' . __LINE__ . "] Order status query: WHERE status='$s'");
-            $tmpRows = $order->getOrderRows("WHERE status='$s'");
+            $tmpRows = $order->getOrderRows("WHERE status='$s'");            
             $n = count($tmpRows);
             if($n > 0) {
               $url = Cart66Common::replaceQueryString("page=cart66_admin&status=$s");
-              echo "<a href=\"$url\">$s (" . count($tmpRows) . ")</a> &nbsp;|&nbsp; ";
+              echo "<a href=\"$url\">" . ucwords($s) . " (" . count($tmpRows) . ")</a> &nbsp;|&nbsp; ";
             }
             else {
-              echo "$s (0) &nbsp;|&nbsp;";
+              echo ucwords($s) ." (0) &nbsp;|&nbsp;";
             }
           }
         ?>
@@ -57,61 +37,106 @@
   <?php
     }
     else {
-      echo "<p style=\"float: left; clear: both; color: #999; font-size: 11px; both; margin-top:0; padding-top: 0;\">
-        You should consider setting order status options such as new and complete on the 
-        <a href='?page=cart66-settings'>Cart66 Settings page</a>.</p>";
+      echo "<p style=\"float: left; clear: both; color: #999; font-size: 11px; both; margin-top:0; padding-top: 0;\">" .
+        __("You should consider setting order status options such as new and complete on the 
+        <a href='?page=cart66-settings'>Cart66 Settings page</a>.","cart66") . "</p>";
     }
-  
   ?>
-  
-  <?php if(isset($search)): ?>
-    <p style='float:left; clear: both;'><strong>Search String:</strong> <?php echo Cart66Common::postVal('search'); ?></p>
-  <?php endif; ?>
 </div>
-
-<table class="widefat" style="width: auto;">
-<thead>
-  <tr>
-    <th colspan="8">Search: <input type="text" name="Cart66AccountSearchField" value="" id="Cart66AccountSearchField" /></th>
-  </tr>
-	<tr>
-	  <th>Order Number</th>
-		<th>Name</th>
-		<th>Amount</th>
-		<th>Date</th>
-    <th>Delivery</th>
-		<th>Status</th>
-		<th>Actions</th>
-	</tr>
-</thead>
-<?php
-
-foreach($orderRows as $row) {
-  ?>
-  <tr>
-    <td><?php echo $row->trans_id ?></td>
-    <td><?php echo $row->bill_first_name ?> <?php echo $row->bill_last_name?></td>
-    <td><?php echo CURRENCY_SYMBOL ?><?php echo $row->total ?></td>
-    <td><?php echo date('m/d/Y', strtotime($row->ordered_on)) ?></td>
-    <td><?php echo $row->shipping_method ?></td>
-    <td><?php echo $row->status ?></td>
-    <td>
-      <a href='?page=cart66_admin&task=view&id=<?php echo $row->id ?>'>View</a> | 
-      <a class='delete' href='?page=cart66_admin&task=delete&id=<?php echo $row->id ?>'>Delete</a>
-    </td>
-    
-  </tr>
-  <?php
-}
-?>
-</table>
-
-<script language='javascript'>
-  $jq = jQuery.noConflict();
+<div class="wrap">
   
-  $jq('.delete').click(function() {
-    return confirm('Are you sure you want to delete this item?');
-  });
-  
-  $jq('#Cart66AccountSearchField').quicksearch('table tbody tr');
+  <table class="widefat Cart66HighlightTable" id="orders_table">
+    <tr>
+      <thead>
+      	<tr>
+      	  <th><?php _e('ID', 'cart66'); ?></th>
+    			<th><?php _e( 'Order Number' , 'cart66' ); ?></th>
+    			<th><?php _e( 'Name' , 'cart66' ); ?></th>
+    			<th><?php _e( 'Name' , 'cart66' ); ?></th>
+      		<th><?php _e( 'Amount' , 'cart66' ); ?></th>
+      		<th><?php _e( 'Date' , 'cart66' ); ?></th>
+          <th><?php _e( 'Delivery' , 'cart66' ); ?></th>
+      		<th><?php _e( 'Status' , 'cart66' ); ?></th>
+      		<th><?php _e( 'Actions' , 'cart66' ); ?></th>
+      	</tr>
+      </thead>
+      <tfoot>
+      	<tr>
+      		<th><?php _e('ID', 'cart66'); ?></th>
+    			<th><?php _e( 'Order Number' , 'cart66' ); ?></th>
+    			<th><?php _e( 'Name' , 'cart66' ); ?></th>
+    			<th><?php _e( 'Name' , 'cart66' ); ?></th>
+      		<th><?php _e( 'Amount' , 'cart66' ); ?></th>
+      		<th><?php _e( 'Date' , 'cart66' ); ?></th>
+          <th><?php _e( 'Delivery' , 'cart66' ); ?></th>
+      		<th><?php _e( 'Status' , 'cart66' ); ?></th>
+      		<th><?php _e( 'Actions' , 'cart66' ); ?></th>
+      	</tr>
+      </tfoot>
+    </tr>
+  </table>
+</div>
+<script type="text/javascript">
+  (function($){
+    $(document).ready(function(){
+      var orders_table = $('#orders_table').dataTable({
+        "bProcessing": true,
+        "bServerSide": true,
+        "bPagination": true,
+        "iDisplayLength": 30,
+        "aLengthMenu": [[30, 60, 150, -1], [30, 60, 150, "All"]],
+        "sPaginationType": "bootstrap",
+        "bAutoWidth": false,
+        "sAjaxSource": ajaxurl + "?action=orders_table",
+        "aaSorting": [[5, 'desc']],
+        "aoColumns": [
+          { "bVisible": false },
+          { "bSortable": true, "fnRender": function(oObj) { return '<a href="?page=cart66_admin&task=view&id=' + oObj.aData[0] + '">' + oObj.aData[1] + '</a>' }},
+          { "fnRender": function(oObj) { return oObj.aData[2] + ' ' + oObj.aData[3] }},
+          { "bVisible": false },
+          { "fnRender": function(oObj) { return '<?php echo CART66_CURRENCY_SYMBOL ?>' + oObj.aData[4] }},
+          { "bSearchable": false },
+          { "bSearchable": false },
+          null,
+          { "bSearchable": false, "bSortable": false, "fnRender": function(oObj) { return oObj.aData[8] != "" ? '<a href="#" onClick="printView(' + oObj.aData[0] + ')" id="print_version_' + oObj.aData[0] + '"><?php _e( "Receipt" , "cart66" ); ?></a> | <a href="?page=cart66_admin&task=view&id=' + oObj.aData[0] + '"><?php _e( "View" , "cart66" ); ?></a> | <a class="delete" href="?page=cart66_admin&task=delete&id=' + oObj.aData[0] + '"><?php _e( "Delete" , "cart66" ); ?></a> | <a href="#" class="Cart66ViewOrderNote" rel="note_' + oObj.aData[0] + '"><?php _e( "Notes" , "cart66" ); ?></a><div class="Cart66OrderNote" id="note_' + oObj.aData[0] + '"><a href="#" class="Cart66CloseNoteView" rel="note_' + oObj.aData[0] + '" alt="Close Notes Window"><img src="<?php echo CART66_URL ?>/images/window-close.png" /></a><h3>' + oObj.aData[1] + '</h3><p>' + oObj.aData[8] + '</p></div>' : '<a href="#" onClick="printView(' + oObj.aData[0] + ')" id="print_version_' + oObj.aData[0] + '"><?php _e( "Receipt" , "cart66" ); ?></a> | <a href="?page=cart66_admin&task=view&id=' + oObj.aData[0] + '"><?php _e( "View" , "cart66" ); ?></a> | <a class="delete" href="?page=cart66_admin&task=delete&id=' + oObj.aData[0] + '"><?php _e( "Delete" , "cart66" ); ?></a>'; },"aTargets": [ 9 ] }
+        ],
+        "oLanguage": { 
+          "sZeroRecords": "<?php _e('No matching Orders found', 'cart66'); ?>", 
+          "sSearch": "<?php _e('Search', 'cart66'); ?>:", 
+          "sInfo": "<?php _e('Showing', 'cart66'); ?> _START_ <?php _e('to', 'cart66'); ?> _END_ <?php _e('of', 'cart66'); ?> _TOTAL_ <?php _e('entries', 'cart66'); ?>", 
+          "sInfoEmpty": "<?php _e('Showing 0 to 0 of 0 entries', 'cart66'); ?>", 
+          "oPaginate": {
+            "sNext": "<?php _e('Next', 'cart66'); ?>", 
+            "sPrevious": "<?php _e('Previous', 'cart66'); ?>", 
+            "sLast": "<?php _e('Last', 'cart66'); ?>", 
+            "sFirst": "<?php _e('First', 'cart66'); ?>"
+          }, 
+          "sInfoFiltered": "(<?php _e('filtered from', 'cart66'); ?> _MAX_ <?php _e('total entries', 'cart66'); ?>)", 
+          "sLengthMenu": "<?php _e('Show', 'cart66'); ?> _MENU_ <?php _e('entries', 'cart66'); ?>", 
+          "sLoadingRecords": "<?php _e('Loading', 'cart66'); ?>...", 
+          "sProcessing": "<?php _e('Processing', 'cart66'); ?>..." 
+        }
+      }).css('width','');
+      $('.Cart66ViewOrderNote').live('click', function () {
+        $(".Cart66OrderNote").hide();
+        var id = $(this).attr('rel');
+        $('#' + id).show();
+        return false;
+      });
+      $('.Cart66CloseNoteView').live('click', function () {
+        var id = $(this).attr('rel');
+        $('#' + id).hide();
+        return false;
+      });
+      $('.delete').live('click', function() {
+        return confirm('Are you sure you want to delete this item?');
+      });
+      orders_table.fnFilter( '<?php echo $status ?>', 7 );
+    } );    
+  })(jQuery);
+  function printView(id) {
+    var url = ajaxurl + '?action=print_view&order_id=' + id
+    myWindow = window.open(url,"Your_Receipt","resizable=yes,scrollbars=yes,width=550,height=700");
+    return false;
+  }
 </script>

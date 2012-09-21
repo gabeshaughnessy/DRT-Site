@@ -1,5 +1,0 @@
-# Prevent direct linking to the Cart66 log file
-<Files ~ "\.(txt|log)$">
-  order allow,deny
-  deny from all
-</Files>

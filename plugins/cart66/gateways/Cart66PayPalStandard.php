@@ -49,7 +49,7 @@ class Cart66PayPalStandard {
       $referrer = false;
       $deliveryMethod = $pp['custom'];
       if(strpos($deliveryMethod, '|') !== false) {
-        list($deliveryMethod, $referrer, $gfData) = explode('|', $deliveryMethod);
+        list($deliveryMethod, $referrer, $gfData, $coupon) = explode('|', $deliveryMethod);
       }
       
       // Parse Gravity Forms ids
@@ -67,9 +67,16 @@ class Cart66PayPalStandard {
       if(isset($pp['discount'])) {
         $discount = $pp['discount'];
       }
-
+      
+      // Look for coupon code
+      $coupon_code = "none";
+      if(isset($coupon) && $coupon!="") {
+        $coupon_code = $coupon;
+      }
+      
       $data = array(
-        'bill_first_name' => $pp['address_name'],
+        'bill_first_name' => $pp['first_name'],
+        'bill_last_name' => $pp['last_name'],
         'bill_address' => $pp['address_street'],
         'bill_city' => $pp['address_city'],
         'bill_state' => $pp['address_state'],
@@ -88,9 +95,10 @@ class Cart66PayPalStandard {
         'tax' => $pp['tax'],
         'subtotal' => $subtotal,
         'total' => $pp['mc_gross'],
+        'coupon' => $coupon_code,
         'discount_amount' => $discount,
         'trans_id' => $pp['txn_id'],
-        'ordered_on' => date('Y-m-d H:i:s'),
+        'ordered_on' => date('Y-m-d H:i:s', Cart66Common::localTs()),
         'status' => $status,
         'ouid' => $ouid
       );
@@ -155,6 +163,12 @@ class Cart66PayPalStandard {
           $formEntryId = '';
           if(is_array($gfIds) && !empty($gfIds) && isset($gfIds[$i])) {
             $formEntryId = $gfIds[$i];
+            if(class_exists('RGFormsModel')) {
+              if($lead = RGFormsModel::get_lead($formEntryId)) {
+                $lead['status'] = 'active';
+                RGFormsModel::update_lead($lead);
+              }
+            }
           }
 
           $duid = md5($pp['txn_id'] . '-' . $orderId . '-' . $productId);
@@ -174,29 +188,21 @@ class Cart66PayPalStandard {
       }
       
       // Handle email receipts
-      $order = new Cart66Order($orderId);
-      $msg = Cart66Common::getEmailReceiptMessage($order);
-
-      // Send email receipts
-      $setting = new Cart66Setting();
-      $to = $pp['payer_email'];
-      $subject = Cart66Setting::getValue('receipt_subject');
-      $headers = 'From: '. Cart66Setting::getValue('receipt_from_name') .' <' . Cart66Setting::getValue('receipt_from_address') . '>';
-      Cart66Common::mail($to, $subject, $msg, $headers);
-
-      $others = Cart66Setting::getValue('receipt_copy');
-      if($others) {
-        $list = explode(',', $others);
-        $msg = "THIS IS A COPY OF THE RECEIPT\n\n$msg";
-        foreach($list as $e) {
-          $e = trim($e);
-          $isSent = Cart66Common::mail($e, $subject, $msg, $headers);
-          if(!$isSent) {
-            Cart66Common::log("Mail not sent to: $e");
-          }
-        }
+      if(CART66_PRO && Cart66Setting::getValue('enable_advanced_notifications') ==1) {
+        $notify = new Cart66AdvancedNotifications($orderId);
+        $notify->sendAdvancedEmailReceipts();
       }
-
+      else {
+        $notify = new Cart66Notifications($orderId);
+        $notify->sendEmailReceipts();
+      }
+      
+      $promotion = new Cart66Promotion();
+      $promotion->loadByCode($coupon_code);
+      if($promotion) {
+        $promotion->updateRedemptions();
+      }
+      
       // Process affiliate reward if necessary
       if($referrer) {
         Cart66Common::awardCommission($orderId, $referrer);

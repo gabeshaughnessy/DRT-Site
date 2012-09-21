@@ -68,20 +68,20 @@
 					
 				<? } ?>
 				
-				<li><input class="submit" type="submit" class="btn_search" value="Send Request"></li>
+				<li><input type="submit" class="submit btn_search" value="Send Request"></li>
 			</ul>
 			</form>
 		</div>
 		
 		<script>
-			<? if($site->exists($captcha_error)) { ?>$.scrollTo('#captcha_error');<? } ?>
+			<? if($site->exists($captcha_error)) { ?>jQuery.scrollTo('#captcha_error');<? } ?>
 		
-			$.tools.validator.localize("en", {
+			jQuery.tools.validator.localize("en", {
 				'[required]' : 'required',
 				':email' : 'enter a valid email'
 			});
 		
-			$("#contact").validator({ 
+			jQuery("#contact").validator({ 
 				position: 'center left', 
 				offset: [-15, -70],
 				message: '<div id="rezgo_error"><em></em></div>' // em element is the arrow

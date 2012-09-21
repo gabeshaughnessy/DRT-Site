@@ -5,7 +5,7 @@ Tags: tours, activities, events, attractions, booking, reservation,
 ticketing, e-commerce, business, rezgo
 Requires at least: 3.0.0
 Tested up to: 3.3.1
-Stable tag: 1.5
+Stable tag: 1.6
 
 Integrate Rezgo, the leading tour and activity booking platform with your WordPress website.
 
@@ -146,6 +146,13 @@ certificate, the transaction will complete on your Rezgo hosted
 booking engine.
 
 == Changelog ==
+
+= 1.6 =
+* Updated payment step of booking page to new async version.
+* Updated calendar ajax to new faster version used on white label.
+* Updated jQuery in default template to use noConflict() mode.
+* Fixed a number of small issues with the checkout process.
+* Fixed a bug preventing the calendar from going forward more than 12 months.
 
 
 = 1.5 =

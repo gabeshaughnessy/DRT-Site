@@ -15,56 +15,7 @@ class SpreedlyCommon {
     self::$baseUri = "https://spreedly.com/api/v4/$siteName";
   }
   
-  /**
-   * Convert an array into XML
-   * 
-   * Example use: echo buildXml($products,'products');
-   * 
-   * @param array $array       - The array you wish to convert into a XML structure.
-   * @param string $name       - The name you wish to enclose the array in, the 'parent' tag for XML.
-   * @param bool $standalone   - This will add a document header to identify this solely as a XML document.
-   * @param bool $beginning    - INTERNAL USE... DO NOT USE!
-   * @param int $nested        - INTERNAL USE... DO NOT USE! The nest level for pretty formatting
-   * @return Gives a string output in a XML structure
-  */
- 
-  public static function buildXml($array, $name, $space='', $standalone=false, $beginning=true, $nested=0) {
-    $output = '';
-    if ($beginning) {
-      if($standalone) header("content-type:text/xml;charset=utf-8");
-      if(!isset($output)) { $output = ''; }
-      if($standalone) $output .= '<'.'?'.'xml version="1.0" encoding="UTF-8"'.'?'.'>' . "\n";
-      if(!empty($space)) {
-        $output .= '<' . $name . ' xmlns="' . $space . '">' . "\n";
-      }
-      else {
-        $output .= '<' . $name . '>' . "\n";
-      }
-      $nested = 0;
-    }
-
-    // This is required because XML standards do not allow a tag to start with a number or symbol, you can change this value to whatever you like:
-    $ArrayNumberPrefix = 'ARRAY_NUMBER_';
-
-     foreach ($array as $root=>$child) {
-      if (is_array($child)) {
-        $output .= str_repeat(" ", (2 * $nested)) . '  <' . (is_string($root) ? $root : $ArrayNumberPrefix . $root) . '>' . "\n";
-        $nested++;
-        $output .= self::buildXml($child,NULL,NULL,NULL,FALSE, $nested);
-        $nested--;
-        $output .= str_repeat(" ", (2 * $nested)) . '  </' . (is_string($root) ? $root : $ArrayNumberPrefix . $root) . '>' . "\n";
-      }
-      else {
-        if(!isset($output)) { $output = ''; }
-        $output .= str_repeat(" ", (2 * $nested)) . '  <' . (is_string($root) ? $root : $ArrayNumberPrefix . $root) . '>' .
-          $child . '</' . (is_string($root) ? $root : $ArrayNumberPrefix . $root) . '>' . "\n";
-      }
-    }
-
-    if ($beginning) $output .= '</' . $name . '>';
-
-    return $output;
-  }
+  
   
   
   public static function curlRequest($url, $method="get", $data=null) {

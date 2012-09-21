@@ -4,8 +4,8 @@ Contributors: Devin Price
 Tags: options, theme options
 Donate link: http://bit.ly/options-donate
 Requires at least: 3.3
-Tested up to: 3.4
-Stable tag: 1.2
+Tested up to: 3.4.1
+Stable tag: 1.3
 License: GPLv2
 
 == Description ==
@@ -66,6 +66,13 @@ You can also watch the video screencast I have at [http://wptheming.com/options-
 1. An example of the "Advanced Options" tag in the "Options Check" theme using this plugin.
 
 == Changelog ==
+
+= 1.3 =
+
+* Allow options to save when set by theme customizer
+* Save checkbox options to boolean false rather than "0"
+* Added optionsframework_after hook
+* Hungarian translations by kardiweb.org
 
 = 1.2 =
 

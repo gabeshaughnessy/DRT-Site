@@ -10,7 +10,7 @@ class Cart66PayPalSubscription extends Cart66Product {
     
     // Verify that the item number is present
     if(empty($this->item_number)) {
-      $this->addError('item_number', 'Item number is required', 'subscription_item_number');
+      $this->addError('item_number', __("Item number is required","cart66"), 'subscription_item_number');
     }
     
     // Verify that no other products have the same item number
@@ -19,24 +19,24 @@ class Cart66PayPalSubscription extends Cart66Product {
       $sql = $this->_db->prepare($sql, $this->item_number, $this->id);
       $count = $this->_db->get_var($sql);
       if($count > 0) {
-        $this->addError('item_number', 'The item number must be unique', 'subscription_item_number');
+        $this->addError('item_number', __("The item number must be unique","cart66"), 'subscription_item_number');
       }
     }
     
     if(empty($this->name)) {
-      $this->addError('name', 'Subscription name is required', 'subscription_name');
+      $this->addError('name', __("Subscription name is required","cart66"), 'subscription_name');
     }
     
     if(empty($this->featureLevel)) {
-      $this->addError('feature_level', 'Feature level is required', 'subscription_feature_level');
+      $this->addError('feature_level', __("Feature level is required","cart66"), 'subscription_feature_level');
     }
     
     if($this->price <= 0  || !is_numeric($this->price)) {
-      $this->addError('price', 'The price must be greater than zero', 'subscription_price');
+      $this->addError('price', __("The price must be greater than zero","cart66"), 'subscription_price');
     }
     
     if($this->billing_interval <= 0 || !is_numeric($this->billing_interval)) {
-      $this->addError('billing_interval', 'The billing interval must be a number greater than zero', 'subscription_billing_interval');
+      $this->addError('billing_interval', __("The billing interval must be a number greater than zero","cart66"), 'subscription_billing_interval');
     }
     
     return $this->getErrors();
@@ -48,14 +48,14 @@ class Cart66PayPalSubscription extends Cart66Product {
       if(empty($this->priceDescription)) {
         $oneTime = $this->setupFee;
         if($oneTime > 0) {
-          $description .= CURRENCY_SYMBOL . number_format($oneTime, 2) . "&nbsp;(one&nbsp;time) + ";
+          $description .= CART66_CURRENCY_SYMBOL . number_format($oneTime, 2) . "&nbsp;(one&nbsp;time) + ";
         }
 
         if($this->offerTrial && $showTrialPricing) {
           $description .= ' <span class="trialDescription">' . $this->getTrialPriceDescription() .  ' ' . $trialMessage . '</span> then ';
         }
 
-        $description .= CURRENCY_SYMBOL . $this->price . ' / ';
+        $description .= CART66_CURRENCY_SYMBOL . $this->price . ' / ';
         if($this->billingInterval > 1) {
           $description .= $this->billingInterval . '&nbsp;' . $this->billingIntervalUnit;
         }
@@ -73,7 +73,7 @@ class Cart66PayPalSubscription extends Cart66Product {
   public function getTrialPriceDescription() {
     $description = 'No trial';
     if($this->offerTrial > 0) {
-      $description = CURRENCY_SYMBOL . number_format($this->trialPrice, 2) . ' / ';
+      $description = CART66_CURRENCY_SYMBOL . number_format($this->trialPrice, 2) . ' / ';
       if($this->trialPeriod > 1) {
         $description .= $this->trialPeriod . '&nbsp;';
       }

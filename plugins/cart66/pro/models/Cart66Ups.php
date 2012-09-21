@@ -33,6 +33,9 @@ class Cart66Ups {
   public function getRate($PostalCode, $dest_zip, $dest_country_code, $service, $weight, $length=0, $width=0, $height=0) {
     $setting= new Cart66Setting();
     $countryCode = array_shift(explode('~', Cart66Setting::getValue('home_country')));
+    $pickupCode = (Cart66Setting::getValue('ups_pickup_code')) ? Cart66Setting::getValue('ups_pickup_code') : "03";
+    $ResidentialAddressIndicator = (Cart66Setting::getValue('ups_only_ship_commercial')) ? "" : "
+    <ResidentialAddressIndicator/>";
     
     if ($this->credentials != 1) {
       print 'Please set your credentials with the setCredentials function';
@@ -41,9 +44,9 @@ class Cart66Ups {
     
     $data ="<?xml version=\"1.0\"?>  
       <AccessRequest xml:lang=\"en-US\">  
-        <AccessLicenseNumber>$this->AccessLicenseNumber</AccessLicenseNumber>  
-        <UserId>$this->UserID</UserId>  
-        <Password>$this->Password</Password>  
+        <AccessLicenseNumber>" . urlencode(trim($this->AccessLicenseNumber)) ."</AccessLicenseNumber>  
+        <UserId>" . urlencode($this->UserID) . "</UserId>  
+        <Password>" . urlencode($this->Password) . "</Password>  
       </AccessRequest>  
       <?xml version=\"1.0\"?>  
       <RatingServiceSelectionRequest xml:lang=\"en-US\">  
@@ -56,7 +59,7 @@ class Cart66Ups {
           <RequestOption>Rate</RequestOption>  
         </Request>  
         <PickupType>  
-          <Code>01</Code>  
+          <Code>$pickupCode</Code>  
         </PickupType>  
         <Shipment>  
           <Shipper>  
@@ -69,8 +72,7 @@ class Cart66Ups {
           <ShipTo>  
             <Address>  
             <PostalCode>$dest_zip</PostalCode>  
-            <CountryCode>$dest_country_code</CountryCode>  
-            <ResidentialAddressIndicator/>  
+            <CountryCode>$dest_country_code</CountryCode>$ResidentialAddressIndicator  
             </Address>  
           </ShipTo>  
           <ShipFrom>  
@@ -103,7 +105,7 @@ class Cart66Ups {
           </Package>  
       </Shipment>  
       </RatingServiceSelectionRequest>";  
-    $ch = curl_init("https://www.ups.com/ups.app/xml/Rate");  
+    $ch = curl_init("https://onlinetools.ups.com/ups.app/xml/Rate");  
     curl_setopt($ch, CURLOPT_HEADER, 1);  
     curl_setopt($ch,CURLOPT_POST,1);  
     curl_setopt($ch,CURLOPT_TIMEOUT, 60);  
@@ -114,14 +116,21 @@ class Cart66Ups {
     $result = curl_exec ($ch); 
     $xml = substr($result, strpos($result, '<RatingServiceSelectionResponse'));
     
-    // Cart66Common::log('[' . basename(__FILE__) . ' - line ' . __LINE__ . "] UPS XML REQUEST: \n$data");
-    // Cart66Common::log('[' . basename(__FILE__) . ' - line ' . __LINE__ . "] UPS XML RESULT: \n$xml");
+    Cart66Common::log('[' . basename(__FILE__) . ' - line ' . __LINE__ . "] UPS XML REQUEST: \n$data");
+    Cart66Common::log('[' . basename(__FILE__) . ' - line ' . __LINE__ . "] UPS XML RESULT: \n$xml");
     
-    $xml = new SimpleXmlElement($xml);
+    try{
+      $xml = new SimpleXmlElement($xml);
+    }
+    catch(Exception $e){
+      Cart66Common::log('[' . basename(__FILE__) . ' - line ' . __LINE__ . "] Cart66 Exception caught when trying to get UPS XML Response: " . $e->getMessage() . " \n");
+      $rate = false;
+    }
+    
      
     $responseDescription = $xml->Response->ResponseStatusDescription;
     $errorDescription = $xml->Response->Error->ErrorDescription;
-    Cart66Common::log('[' . basename(__FILE__) . ' - line ' . __LINE__ . "] Response Description: (Service: $service) $responseDescription $errorDescription");
+    // Cart66Common::log('[' . basename(__FILE__) . ' - line ' . __LINE__ . "] Response Description: (Service: $service) $responseDescription $errorDescription");
     if($responseDescription == "Failure") {
       $rate = false;
     }
@@ -138,21 +147,22 @@ class Cart66Ups {
    * Return an array where the keys are the service names and the values are the prices
    */
   public function getAllRates($toZip, $toCountryCode, $weight) {
-    global $wpdb;
     $rates = array();
-    $shippingMethods = Cart66Common::getTableName('shipping_methods');
-    $sql = "SELECT name, code from $shippingMethods where carrier = 'ups'";
-    $results = $wpdb->get_results($sql);
-    foreach($results as $method) {
-      $rate = $this->getRate($this->fromZip, $toZip, $toCountryCode, $method->code, $weight);
-      if($rate !== FALSE) {
-        $rates[$method->name] = number_format((float) $rate, 2);
-      }
-      Cart66Common::log("LIVE RATE REMOTE RESULT ==> ZIP: $toZip Service: $method->name ($method->code) Rate: $rate");
-    }
+    $method = new Cart66ShippingMethod();
+    $upsServices = $method->getServicesForCarrier('ups');
     
-    if(count($rates) == 0) {
-      $rates['No Shipping Methods Available'] = false;
+    /*
+    $shippingMethods = Cart66Common::getTableName('shipping_methods');
+    $sql = "SELECT name, code from $shippingMethods where carrier = 'ups'";'
+    $results = $wpdb->get_results($sql);
+    */
+    
+    foreach($upsServices as $service => $code) {
+      $rate = $this->getRate($this->fromZip, $toZip, $toCountryCode, $code, $weight);
+      if($rate !== FALSE) {
+        $rates[$service] = number_format((float) $rate, 2, '.', '');
+      }
+      Cart66Common::log("LIVE RATE REMOTE RESULT ==> ZIP: $toZip Service: $service $code) Rate: $rate");
     }
     
     return $rates;

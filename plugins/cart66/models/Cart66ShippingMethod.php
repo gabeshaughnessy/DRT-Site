@@ -15,15 +15,20 @@ class Cart66ShippingMethod extends Cart66ModelAbstract {
     }
   }
   
-  public function getMethodsForCarrier($carrier) {
-    $methods = array();
+  /**
+   * Return an array of services selected for the carrier where then key is the service name and the value is the service code
+   * 
+   * @return array
+   */
+  public function getServicesForCarrier($carrier) {
+    $services = array();
     $shippingMethods = Cart66Common::getTableName('shipping_methods');
     $sql = "SELECT name, code from $shippingMethods where carrier='$carrier'";
     $results = $this->_db->get_results($sql);
-    foreach($results as $m) {
-      $methods[$m->name] = $m->code;
+    foreach($results as $s) {
+      $services[$s->name] = $s->code;
     }
-    return $methods;
+    return $services;
   }
   
   /**
@@ -49,9 +54,14 @@ class Cart66ShippingMethod extends Cart66ModelAbstract {
    * Delete all methods for the given carrier if the carrier code is not in the given array
    */
   public function pruneCarrierMethods($carrier, array $codes) {
-    $codes = implode(',', $codes);
+    $codes = array_map(array($this->_db, 'escape'), $codes);
+    Cart66Common::log('[' . basename(__FILE__) . ' - line ' . __LINE__ . "] Codes array map: " . print_r($codes, true));
+    $codes = implode("','", $codes);
     $shippingMethods = $this->_tableName;
-    $sql = "DELETE from $shippingMethods where carrier='$carrier' and code NOT IN ($codes)";
+    // $sql = "DELETE from $shippingMethods where carrier='$carrier' and code NOT IN ($codes)";
+    $sql = "DELETE from $shippingMethods where carrier=%s and code NOT IN ('$codes')";
+    $sql = $this->_db->prepare($sql, $carrier);
+    Cart66Common::log('[' . basename(__FILE__) . ' - line ' . __LINE__ . "] Pruning shipping methods: $sql");
     $this->_db->query($sql);
   }
   

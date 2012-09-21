@@ -63,8 +63,7 @@ class Cart66Common {
   public static function activePromotions() {
     $active = false;
     $promo = new Cart66Promotion();
-    $promos = $promo->getModels();
-    if(count($promos)) {
+    if($promo->getOne()) {
       $active = true;
     }
     return $active;
@@ -74,33 +73,107 @@ class Cart66Common {
     echo isset($value)? $value : '';
   }
   
-  public static function getView($filename, $data=null) {
-
-    $unregistered = '';
+  public static function getView($filename, $data=null, $notices=true) {
+    $notice = '';
     if(strpos($filename, 'admin') !== false) {
+      $mijireh_notice = Cart66Setting::getValue('mijireh_notice');
+      if($mijireh_notice != 1) {
+        if($notices) {
+          $notice = '<div id="mijireh_notice" class="mijireh-info alert-message info" data-alert="alert">
+          <a href="#" id="mijireh_dismiss" class="close">&times;</a>
+            <div class="mijireh-logo"><img src="' . CART66_URL . '/images/mijireh-checkout-logo.png" alt="Mijireh Checkout Logo"></div>
+            <div class="mijireh-blurb">
+            <h2>Cart66 now supports Mijireh Checkout!</h2>
+            <p>Accept credit cards on a fully PCI compliant ecommerce platform</p>
+            <ul>
+              <li>No need for SSL certificates or a dedicated IP addresss</li>
+              <li>No need to pay for for quarterly security scans</li>
+              <li>No need to give up control of your design</li>
+            </ul>
+            <h1><a href="http://mijireh.com" target="_new">Start now for FREE!</a></h1>
+            </div>
+          </div>';
+        }
+      }
+      
       if(CART66_PRO && !self::isRegistered()) {
         $hardCoded = '';
         $settingsUrl = get_bloginfo('wpurl') . '/wp-admin/admin.php?page=cart66-settings';
         if(CART66_ORDER_NUMBER !== false) {
           $hardCoded = "<br/><br/><em>An invalid order number has be hard coded<br/> into the main cart66.php file.</em>";
         }
-        $unregistered = '
-          <div class="unregistered">
-            This is not a registered copy of Cart66.<br/>
-            Please <a href="' . $settingsUrl . '">enter your order number</a> or
-            <a href="http://www.cart66.com/pricing">buy a license for your site.</a> ' . $hardCoded . '
-          </div>
-        ';
+        if($notices) {
+          $notice .= '
+            <div class="unregistered alert-message alert-error">
+              <p>This is not a registered copy of Cart66.<br/>
+              Please <a href="' . $settingsUrl . '">enter your order number</a> or
+              <a href="http://www.cart66.com/pricing">buy a license for your site.</a> ' . $hardCoded . '
+              </p>
+            </div>
+          ';
+        }
       }
+      
     }
 
-    $filename = WP_PLUGIN_DIR . "/cart66/$filename"; 
+    $customView = false;
+    $themeDirectory = get_stylesheet_directory();
+    $approvedOverrideFiles = array(
+      "views/cart.php",
+      "views/cart-button.php",
+      "views/checkout.php",
+      "views/account-login.php",
+      "views/cart-sidebar.php",
+      "views/cart-sidebar-advanced.php",
+      "views/receipt.php",
+      "views/receipt_print_version.php",
+      "views/paypal-express.php",
+      "pro/views/terms.php",
+      "pro/views/emails/default-email-followup.php",
+      "pro/views/emails/default-email-fulfillment.php",
+      "pro/views/emails/default-email-receipt.php",
+      "pro/views/emails/default-email-reminder.php",
+      "pro/views/emails/default-email-status.php",
+      "pro/views/emails/email-products.php",
+      "pro/views/emails/email-receipt.php",
+    );
+    $overrideDirectory = $themeDirectory."/cart66-templates";
+    $userViewFile = $overrideDirectory."/$filename";
+    
+    //Cart66Common::log('[' . basename(__FILE__) . ' - line ' . __LINE__ . "] Override: $overrideDirectory\nUser view file: $userViewFile");
+    
+    if(file_exists($userViewFile) && in_array($filename,$approvedOverrideFiles)) {
+      // File exists, make sure it's not empty
+      if(filesize($userViewFile)>10) {
+        // It's not empty
+        $customView = true;
+        $customViewPath = $userViewFile;
+      }
+      else{
+        Cart66Common::log('[' . basename(__FILE__) . ' - line ' . __LINE__ . "] User file was empty: $userViewFile");
+      }
+    }
+    else{
+      // Cart66Common::log('[' . basename(__FILE__) . ' - line ' . __LINE__ . "] File exists: ".var_export(file_exists($userViewFile),true)."\n");
+      // Cart66Common::log('[' . basename(__FILE__) . ' - line ' . __LINE__ . "] Approved Override: ".var_export(in_array($filename,$approvedOverrideFiles),true));
+    }
+  
+    // Check for override and confirm we have a registered plugin
+    if($customView && CART66_PRO && self::isRegistered()) {
+      // override is present
+      $filename = $customViewPath;
+    }
+    else {
+      // no override, render standard view
+      $filename = CART66_PATH . "/$filename";
+    }
+    
     ob_start();
     include $filename;
     $contents = ob_get_contents();
     ob_end_clean();
-
-    return $unregistered . $contents;
+    
+    return $notice . $contents;
   }
   
   public static function getTableName($name, $prefix='cart66_'){
@@ -117,13 +190,23 @@ class Cart66Common {
    * If CART66_DEBUG is defined as true and a log file exists in the root of the Cart66 plugin directory, log the $data
    */
   public static function log($data) {
+    
     if(defined('CART66_DEBUG') && CART66_DEBUG) {
-      $date = date('m/d/Y g:i:s a');
-      $header = "\n\n[LOG DATE: $date]\n";
-      $filename = WP_PLUGIN_DIR . "/cart66/log.txt"; 
+      $tz = '- Server time zone ' . date('T');
+      $date = date('m/d/Y g:i:s a', self::localTs());
+      $header = strpos($_SERVER['REQUEST_URI'], 'wp-admin') ? "\n\n======= ADMIN REQUEST =======\n[LOG DATE: $date $tz]\n" : "\n\n[LOG DATE: $date $tz]\n";
+      $filename = CART66_PATH . "/log.txt"; 
       if(file_exists($filename) && is_writable($filename)) {
         file_put_contents($filename, $header . $data, FILE_APPEND);
       }
+    }
+    
+  }
+  
+  public static function clearLog(){
+    $filename = CART66_PATH . "/log.txt"; 
+    if(file_exists($filename) && is_writable($filename)) {
+      file_put_contents($filename, '');
     }
   }
 
@@ -139,7 +222,7 @@ class Cart66Common {
 	public static function getRandString($length = 14) {
 	  $string = '';
     $chrs = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ';
-    for($i=0; $i<14; $i++) {
+    for($i=0; $i<$length; $i++) {
       $loc = mt_rand(0, strlen($chrs)-1);
       $string .= $chrs[$loc];
     }
@@ -159,8 +242,8 @@ class Cart66Common {
    */
   public static function isLoggedIn() {
     $isLoggedIn = false;
-    if(isset($_SESSION['Cart66AccountId']) && is_numeric($_SESSION['Cart66AccountId']) && $_SESSION['Cart66AccountId'] > 0) {
-      $isLoggedIn = $_SESSION['Cart66AccountId'];
+    if(Cart66Session::get('Cart66AccountId') && is_numeric(Cart66Session::get('Cart66AccountId')) && Cart66Session::get('Cart66AccountId') > 0) {
+      $isLoggedIn = Cart66Session::get('Cart66AccountId');
     }
     return $isLoggedIn;
   }
@@ -190,16 +273,21 @@ class Cart66Common {
           }
           
           // Transaction if for commission is the id in th order items table
-          $txn_id = $item->id;
+          $txn_id = $order->trans_id;
           $sale_amount = $price;
           $item_id = $item->item_number;
           $buyer_email = $order->email;
+          
+          // Affiliate Royale
+          do_action('wafp_award_commission', $referrer, $sale_amount, $txn_id, $item_id, $buyer_email); 
 
-          // Make sure commission has not already been granted for this transaction
-          $aff_sales_table = $wpdb->prefix . "affiliates_sales_tbl";
-          $txnCount = $wpdb->get_var($wpdb->prepare("SELECT count(*) FROM $aff_sales_table where txn_id = %s", $txn_id));
-          if($txnCount < 1) {
-            wp_aff_award_commission($referrer,$sale_amount,$txn_id,$item_id,$buyer_email);
+          if(function_exists('wp_aff_award_commission')) {
+            // Make sure commission has not already been granted for this transaction
+            $aff_sales_table = $wpdb->prefix . "affiliates_sales_tbl";
+            $txnCount = $wpdb->get_var($wpdb->prepare("SELECT count(*) FROM $aff_sales_table where txn_id = %s", $txn_id));
+            if($txnCount < 1) {
+              wp_aff_award_commission($referrer,$sale_amount,$txn_id,$item_id,$buyer_email);
+            }
           }
         }
         
@@ -241,48 +329,38 @@ class Cart66Common {
     return $isUnique;
   }
   
-  
-  /**
-   * Configure mail for use with either standard wp_mail or when using the WP Mail SMTP plugin
-   */
-  public static function mail($to, $subject, $msg, $headers=null) {
-    //Disable mail headers if the WP Mail SMTP plugin is in use.
-    if(function_exists('wp_mail_smtp_activate')) { $headers = null; }
-    return wp_mail($to, $subject, $msg, $headers);
+  public static function randomString($numChars = 7) {
+    $letters = "";
+    mt_srand((double)microtime()*1000000);
+    for ($i = 0; $i < $numChars; $i++) { 
+      $randval = chr(mt_rand(ord("a"), ord("z")));
+      $letters .= $randval;
+    }
+    return $letters;
   }
   
-  public static function randomString($numChars = 7) {
-		$letters = "";
-		mt_srand((double)microtime()*1000000);
-		for ($i = 0; $i < $numChars; $i++) { 
-			$randval = chr(mt_rand(ord("a"), ord("z")));
-			$letters .= $randval;
-		}
-		return $letters;
-	}
-	
-	public static function isValidDate($val) {
-	  $isValid = false;
-		if(preg_match("/\d{1,2}\/\d{1,2}\/\d{4}/", $val)) {
-			list($month, $day, $year) = split("/", $val);
-			if(is_numeric($month) && is_numeric($day) && is_numeric($year) ) {
-				if($month > 12 || $month < 1) {
-					$isValid = false;
-				}
-				elseif($day > 31 || $day < 1) {
-					$isValid = false;
-				}
-				elseif($year < 1900) {
-					$isValid = false;
-				}
-				else {
-					$isValid = true;
-				}
-			}
-		}
-		return $isValid;
-	}
-
+  public static function isValidDate($val) {
+    $isValid = false;
+    if(preg_match("/\d{1,2}\/\d{1,2}\/\d{4}/", $val)) {
+      list($month, $day, $year) = split("/", $val);
+      if(is_numeric($month) && is_numeric($day) && is_numeric($year) ) {
+        if($month > 12 || $month < 1) {
+          $isValid = false;
+        }
+        elseif($day > 31 || $day < 1) {
+          $isValid = false;
+        }
+        elseif($year < 1900) {
+          $isValid = false;
+        }
+        else {
+          $isValid = true;
+        }
+      }
+    }
+    return $isValid;
+  }
+  
   /**
    * Strip slashes and escape sequences from POST values and returened the scrubbed value.
    * If the key is not set, return false.
@@ -290,16 +368,30 @@ class Cart66Common {
   public static function postVal($key) {
     $value = false;
     if(isset($_POST[$key])) {
-      $value = $_POST[$key];
-      if(is_scalar($value)) {
-        // Cart66Common::log('[' . basename(__FILE__) . ' - line ' . __LINE__ . "] PostVal before cleanup: $value");
-        $value = strip_tags($value);
-        $value = preg_replace('/[<>\\\\\/]/', '', $value);
-        // Cart66Common::log('[' . basename(__FILE__) . ' - line ' . __LINE__ . "] PostVal after cleanup: $value");
-      }
+      $value = self::deepTagClean($_POST[$key]);
     }
     return $value;
   }
+  
+  public static function deepTagClean(&$data) {
+    if(is_array($data)) {
+      foreach($data as $key => $value) {
+        if(is_array($value)) {
+          $data[$key] = self::deepTagClean($value);
+        }
+        else {
+          $value = strip_tags($value);
+          $data[$key] = preg_replace('/[<>\\\\]/', '', $value);
+        }
+      }
+    }
+    else {
+      $data= strip_tags($data);
+      $data = preg_replace('/[<>\\\\]/', '', $data);;
+    }
+    return $data;
+  }
+  
 
   /**
    * Strip slashes and escape sequences from GET values and returened the scrubbed value.
@@ -314,81 +406,278 @@ class Cart66Common {
     return $value;
   }
   
+  /**
+   * Get home country code from cart settings or return US if no setting exists
+   * 
+   * @return string
+   */
+  public static function getHomeCountryCode() {
+    if($homeCountry = Cart66Setting::getValue('home_country')) {
+      list($homeCountryCode, $dummy) = explode('~', $homeCountry); 
+    }
+    else {
+      $homeCountryCode = 'US';
+    }
+    return $homeCountryCode;
+  }
+  
   public static function getCountryName($code) {
     $countries = self::getCountries(true);
     return $countries[$code];
   }
 
+  public static function getLocaleCode() {
+    $localeCode = false;
+    $localeCodes = array('AU', 'AT', 'BE', 'CA', 'CH', 'CN', 'DE', 'ES', 'GB', 'FR', 'IT', 'NL', 'PL', 'US');
+    if(in_array(self::getHomeCountryCode(), $localeCodes)) {
+      $localeCode = self::getHomeCountryCode();
+    }
+    return $localeCode;
+  }
+  
   public static function getCountries($all=false) {
     $countries = array(
-       'AR'=>'Argentina',
-       'AU'=>'Australia',
-       'AT'=>'Austria',
-       'BS'=>'Bahamas',
-       'BE'=>'Belgium',
-       'BR'=>'Brazil',
-       'BG'=>'Bulgaria',
-       'CA'=>'Canada',
-       'CL'=>'Chile',
-       'CN'=>'China',
-       'CO'=>'Colombia',
-       'CR'=>'Costa Rica',
-       'HR'=>'Croatia',
-       'CY'=>'Cyprus',
-       'CZ'=>'Czech Republic',
-       'DK'=>'Denmark',
-       'EC'=>'Ecuador',
-       'EE'=>'Estonia',
-       'FI'=>'Finland',
-       'FR'=>'France',
-       'DE'=>'Germany',
-       'GR'=>'Greece',
-       'GP'=>'Guadeloupe',
-       'HK'=>'Hong Kong',
-       'HU'=>'Hungary',
-       'IS'=>'Iceland',
-       'IN'=>'India',
-       'ID'=>'Indonesia',
-       'IE'=>'Ireland',
-       'IL'=>'Israel',
-       'IT'=>'Italy',
-       'JM'=>'Jamaica',
-       'JP'=>'Japan',
-       'LV'=>'Latvia',
-       'LT'=>'Lithuania',
-       'LU'=>'Luxembourg',
-       'MY'=>'Malaysia',
-       'MT'=>'Malta',
-       'MX'=>'Mexico',
-       'NL'=>'Netherlands',
-       'NZ'=>'New Zealand',
-       'NO'=>'Norway',
-       'PE'=>'Peru',
-       'PH'=>'Philippines',
-       'PL'=>'Poland',
-       'PT'=>'Portugal',
-       'PR'=>'Puerto Rico',
-       'RO'=>'Romania',
-       'RU'=>'Russia',
-       'SG'=>'Singapore',
-       'SK'=>'Slovakia',
-       'SI'=>'Slovenia',
-       'ZA'=>'South Africa',
-       'KR'=>'South Korea',
-       'ES'=>'Spain',
-       'VC'=>'St. Vincent',
-       'SE'=>'Sweden',
-       'CH'=>'Switzerland',
-       'SY'=>'Syria',
-       'TW'=>'Taiwan',
-       'TH'=>'Thailand',
-       'TT'=>'Trinidad and Tobago',
-       'TR'=>'Turkey',
-       'AE'=>'United Arab Emirates',
-       'GB'=>'United Kingdom',
-       'US'=>'United States',
-       'UY'=>'Uruguay',
-       'VE'=>'Venezuela');
+      'AF'=>'Afghanistan',
+      'AX'=>'Åland Islands',
+      'AL'=>'Albania',
+      'DZ'=>'Algeria',
+      'AD'=>'Andorra',
+      'AO'=>'Angola',
+      'AI'=>'Anguilla',
+      'AG'=>'Antigua and Barbuda',
+      'AR'=>'Argentina',
+      'AM'=>'Armenia',
+      'AW'=>'Aruba',
+      'AU'=>'Australia',
+      'AT'=>'Austria',
+      'AZ'=>'Azerbaijan',
+      'BS'=>'Bahamas',
+      'BH'=>'Bahrain',
+      'BD'=>'Bangladesh',
+      'BB'=>'Barbados',
+      'BY'=>'Belarus',
+      'BE'=>'Belgium',
+      'BZ'=>'Belize',
+      'BJ'=>'Benin',
+      'BM'=>'Bermuda',
+      'BT'=>'Bhutan',
+      'BO'=>'Bolivia',
+      'BQ'=>'Bonaire',
+      'BA'=>'Bosnia-Herzegovina',
+      'BW'=>'Botswana',
+      'BV'=>'Bouvet Island',
+      'BR'=>'Brazil',
+      'IO'=>'British Indian Ocean Territory',
+      'BN'=>'Brunei',
+      'BF'=>'Burkina Faso',
+      'BI'=>'Burundi',
+      'BG'=>'Bulgaria',
+      'KH'=>'Cambodia',
+      'CM'=>'Cameroon',
+      'CA'=>'Canada',
+      'CV'=>'Cape Verde',
+      'KY'=>'Cayman Islands',
+      'CF'=>'Central African Republic',
+      'TD'=>'Chad',
+      'CL'=>'Chile',
+      'CN'=>'China',
+      'CX'=>'Christmas Island',
+      'CC'=>'Cocos Islands',
+      'CO'=>'Colombia',
+      'KM'=>'Comoros',
+      'CD'=>'Democratic Republic of Congo',
+      'CG'=>'Congo',
+      'CK'=>'Cook Islands',
+      'CR'=>'Costa Rica',
+      'CI'=>'Côte d\'Ivoire',
+      'HR'=>'Croatia',
+      'CU'=>'Cuba',
+      'CW'=>'Curaçao',
+      'CY'=>'Cyprus',
+      'CZ'=>'Czech Republic',
+      'DK'=>'Denmark',
+      'DJ'=>'Djibouti',
+      'DM'=>'Dominica',
+      'DO'=>'Dominican Republic',
+      'EC'=>'Ecuador',
+      'EG'=>'Egypt',
+      'SV'=>'El Salvador',
+      'GQ'=>'Equatorial Guinea',
+      'ER'=>'Eritrea',
+      'EE'=>'Estonia',
+      'ET'=>'Ethiopia',
+      'FK'=>'Falkland Islands',
+      'FO'=>'Faroe Islands',
+      'FJ'=>'Fiji',
+      'FI'=>'Finland',
+      'FR'=>'France',
+      'GF'=>'French Guiana',
+      'PF'=>'French Polynesia',
+      'TF'=>'French Southern Territories',
+      'GA'=>'Gabon',
+      'GM'=>'Gambia',
+      'GE'=>'Georgia',
+      'DE'=>'Germany',
+      'GH'=>'Ghana',
+      'GI'=>'Gibraltar',
+      'GR'=>'Greece',
+      'GL'=>'Greenland',
+      'GD'=>'Grenada',
+      'GP'=>'Guadeloupe',
+      'GU'=>'Guam',
+      'GT'=>'Guatemala',
+      'GN'=>'Guinea',
+      'GW'=>'Guinea-Bissau',
+      'GY'=>'Guyana',
+      'HT'=>'Haiti',
+      'VA'=>'Holy See',
+      'HN'=>'Honduras',
+      'HK'=>'Hong Kong',
+      'HU'=>'Hungary',
+      'IS'=>'Iceland',
+      'IN'=>'India',
+      'ID'=>'Indonesia',
+      'IR'=>'Iran',
+      'IQ'=>'Iraq',
+      'IE'=>'Ireland',
+      'IM'=>'Isle of Man',
+      'IL'=>'Israel',
+      'IT'=>'Italy',
+      'JM'=>'Jamaica',
+      'JP'=>'Japan',
+      'JE'=>'Jersey',
+      'JO'=>'Jordan',
+      'KZ'=>'Kazakhstan',
+      'KE'=>'Kenya',
+      'KI'=>'Kiribati',
+      'KW'=>'Kuwait',
+      'KG'=>'Kyrgyzstan',
+      'LA'=>'Laos',
+      'LV'=>'Latvia',
+      'LB'=>'Lebanon',
+      'LS'=>'Lesotho',
+      'LR'=>'Liberia',
+      'LY'=>'Libya',
+      'LI'=>'Liechtenstein',
+      'LT'=>'Lithuania',
+      'LU'=>'Luxembourg',
+      'MO'=>'Macao',
+      'MK'=>'Macedonia',
+      'MG'=>'Madagascar',
+      'MW'=>'Malawi',
+      'MY'=>'Malaysia',
+      'MV'=>'Maldives',
+      'ML'=>'Mali',
+      'MT'=>'Malta',
+      'MH'=>'Marshall Islands',
+      'MR'=>'Mauritania',
+      'MU'=>'Mauritius',
+      'YT'=>'Mayotte',
+      'MX'=>'Mexico',
+      'FM'=>'Micronesia',
+      'MD'=>'Moldova',
+      'MC'=>'Monaco',
+      'MN'=>'Mongolia',
+      'ME'=>'Montenegro',
+      'MA'=>'Morocco',
+      'MZ'=>'Mozambique',
+      'MM'=>'Myanmar',
+      'NA'=>'Namibia',
+      'NR'=>'Nauru',
+      'NP'=>'Nepal',
+      'NL'=>'Netherlands',
+      'NZ'=>'New Zealand',
+      'NI'=>'Nicaragua',
+      'NE'=>'Niger',
+      'NG'=>'Nigeria',
+      'NU'=>'Niue',
+      'NF'=>'Norfolk Island',
+      'KP'=>'North Korea',
+      'NO'=>'Norway',
+      'OM'=>'Oman',
+      'PW'=>'Palau',
+      'PS'=>'Palestinian Territories',
+      'PK'=>'Pakistan',
+      'PA'=>'Panama',
+      'PG'=>'Papua New Guinea',
+      'PY'=>'Paraguay',
+      'PE'=>'Peru',
+      'PH'=>'Philippines',
+      'PN'=>'Pitcairn',
+      'PL'=>'Poland',
+      'PT'=>'Portugal',
+      'PR'=>'Puerto Rico',
+      'QA'=>'Qatar',
+      'RE'=>'Réunion',
+      'RO'=>'Romania',
+      'RU'=>'Russia',
+      'RW'=>'Rwanda',
+      'BL'=>'Saint Barthélemy',
+      'SH'=>'Saint Helena, Ascension and Tristan da Cunha',
+      'KN'=>'Saint Kitts and Nevis',
+      'LC'=>'Saint Lucia',
+      'MF'=>'Saint Martin',
+      'PM'=>'Saint Pierre and Miquelon',
+      'VC'=>'Saint Vincent and the Grenadines',
+      'WS'=>'Samoa',
+      'SM'=>'San Marino',
+      'ST'=>'Sao Tome and Principe',
+      'SA'=>'Saudi Arabia',
+      'SN'=>'Senegal',
+      'RS'=>'Serbia',
+      'SC'=>'Seychelles',
+      'SL'=>'Sierra Leone',
+      'SG'=>'Singapore',
+      'SX'=>'Sint Maarten',
+      'SK'=>'Slovakia',
+      'SI'=>'Slovenia',
+      'LK'=>'Sri Lanka',
+      'SB'=>'Solomon Islands',
+      'SO'=>'Somalia',
+      'ZA'=>'South Africa',
+      'GS'=>'South Georgia and South Sandwich Islands',
+      'KR'=>'South Korea',
+      'SS'=>'South Sudan',
+      'ES'=>'Spain',
+      'VC'=>'St. Vincent',
+      'SD'=>'Sudan',
+      'SR'=>'Suriname',
+      'SJ'=>'Svalbard and Jan Mayen',
+      'SZ'=>'Swaziland',
+      'SE'=>'Sweden',
+      'CH'=>'Switzerland',
+      'SY'=>'Syria',
+      'TW'=>'Taiwan',
+      'TJ'=>'Tajikistan',
+      'TZ'=>'Tanzania',
+      'TH'=>'Thailand',
+      'TL'=>'Timor-Leste',
+      'TG'=>'Togo',
+      'TK'=>'Tokelau',
+      'TO'=>'Tonga',
+      'TT'=>'Trinidad and Tobago',
+      'TN'=>'Tunisia',
+      'TR'=>'Turkey',
+      'TM'=>'Turkmenistan',
+      'TC'=>'Turks and Caicos Islands',
+      'TV'=>'Tuvalu',
+      'UG'=>'Uganda',
+      'UA'=>'Ukraine',
+      'AE'=>'United Arab Emirates',
+      'GB'=>'United Kingdom',
+      'US'=>'United States',
+      'UM'=>'United States Minor Outlying Islands',
+      'UY'=>'Uruguay',
+      'UZ'=>'Uzbekistan',
+      'VU'=>'Vanuatu',
+      'VN'=>'Vietnam',
+      'VG'=>'British Virgin Islands',
+      'VI'=>'US Virgin Islands',
+      'VE'=>'Venezuela',
+      'YE'=>'Yemen',
+      'ZM'=>'Zambia',
+      'ZW'=>'Zimbabwe'
+    );
     
     // Put home country at the top of the list
     $setting = new Cart66Setting();
@@ -458,6 +747,7 @@ class Cart66Common {
       'Hungarian Forint' => 'HUF',
       'Israeli New Sheqel' => 'ILS',
       'Japanese Yen' => 'JPY',
+      'Malaysian Ringgit' => 'MYR',
       'Mexican Peso' => 'MXN',
       'Norwegian Krone' => 'NOK',
       'New Zealand Dollar' => 'NZD',
@@ -474,117 +764,177 @@ class Cart66Common {
   }
 
   
-  public static function getZones($code) {
-    $zones = array('0' => '&nbsp;');
+  public static function getZones($code='all') {
+    $setting = new Cart66Setting();
+    $zones = array();
+    
+    $au = array();
+    $au['0'] = '';
+    $au['ACT'] = 'Australian Capital Territory';
+    $au['NSW'] = 'New South Wales';
+    $au['NT'] = 'Northern Territory';
+    $au['QLD'] = 'Queensland';
+    $au['SA'] = 'South Australia';
+    $au['TAS'] = 'Tasmania';
+    $au['VIC'] = 'Victoria';
+    $au['WA'] = 'Western Australia';
+    $zones['AU'] = $au;
+    
+    $br = array();
+    $br['0'] = '';
+    $br['Acre'] = 'Acre';
+    $br['Alagoas'] = 'Alagoas';
+    $br['Amapa'] = 'Amapa';
+    $br['Amazonas'] = 'Amazonas';
+    $br['Bahia'] = 'Bahia';
+    $br['Ceara'] = 'Ceara';
+    $br['Distrito Federal'] = 'Distrito Federal';
+    $br['Espirito Santo'] = 'Espirito Santo';
+    $br['Goias'] = 'Goias';
+    $br['Maranhao'] = 'Maranhao';
+    $br['Mato Grosso'] = 'Mato Grosso';
+    $br['Mato Grosso do Sul'] = 'Mato Grosso do Sul';
+    $br['Minas Gerais'] = 'Minas Gerais';
+    $br['Para'] = 'Para';
+    $br['Paraiba'] = 'Paraiba';
+    $br['Parana'] = 'Parana';
+    $br['Pernambuco'] = 'Pernambuco';
+    $br['Piaui'] = 'Piaui';
+    $br['Rio de Janeiro'] = 'Rio de Janeiro';
+    $br['Rio Grande do Norte'] = 'Rio Grande do Norte';
+    $br['Rio Grande do Sul'] = 'Rio Grande do Sul';
+    $br['Rondonia'] = 'Rondonia';
+    $br['Roraima'] = 'Roraima';
+    $br['Santa Catarina'] = 'Santa Catarina';
+    $br['Sao Paulo'] = 'Sao Paulo';
+    $br['Sergipe'] = 'Sergipe';
+    $br['Tocantins'] = 'Tocantins';
+    $zones['BR'] = $br;
+    
+    $ca = array();
+    $ca['0'] = '';
+    $ca['AB'] = 'Alberta';
+    $ca['BC'] = 'British Columbia';
+    $ca['MB'] = 'Manitoba';
+    $ca['NB'] = 'New Brunswick';
+    $ca['NF'] = 'Newfoundland';
+    $ca['NT'] = 'Northwest Territories';
+    $ca['NS'] = 'Nova Scotia';
+    $ca['NU'] = 'Nunavut';
+    $ca['ON'] = 'Ontario';
+    $ca['PE'] = 'Prince Edward Island';
+    $ca['PQ'] = 'Quebec';
+    $ca['SK'] = 'Saskatchewan';
+    $ca['YT'] = 'Yukon Territory';
+    $zones['CA'] = $ca;
+    
+    $my['0'] = '';
+    $my['KUL'] = 'Kuala Lumpur (Federal Territory)';
+    $my['LBN'] = 'Labuan (Federal Territory)';
+    $my['PJY'] = 'Putrajaya (Federal Territory)';
+    $my['JHR'] = 'Johor';
+    $my['KDH'] = 'Kedah';
+    $my['KTN'] = 'Kelantan';
+    $my['MLK'] = 'Melaka';
+    $my['NSN'] = 'Negeri Sembilan';
+    $my['PHG'] = 'Pahang';
+    $my['PRK'] = 'Perak';
+    $my['PLS'] = 'Perlis';
+    $my['PNG'] = 'Penang';
+    $my['SBH'] = 'Sabah';
+    $my['SWK'] = 'Sarawak';
+    $my['SGR'] = 'Selangor';
+    $my['TRG'] = 'Terengganu';
+    $zones['MY'] = $my;
+    
+    $us = array();
+    $us['0'] = '';
+    $us['AL'] = 'Alabama';
+    $us['AK'] = 'Alaska ';
+    $us['AZ'] = 'Arizona';
+    $us['AR'] = 'Arkansas';
+    $us['CA'] = 'California ';
+    $us['CO'] = 'Colorado';
+    $us['CT'] = 'Connecticut';
+    $us['DE'] = 'Delaware';
+    $us['DC'] = 'D. C.';
+    $us['FL'] = 'Florida';
+    $us['GA'] = 'Georgia ';
+    $us['HI'] = 'Hawaii';
+    $us['ID'] = 'Idaho';
+    $us['IL'] = 'Illinois';
+    $us['IN'] = 'Indiana';
+    $us['IA'] = 'Iowa';
+    $us['KS'] = 'Kansas';
+    $us['KY'] = 'Kentucky';
+    $us['LA'] = 'Louisiana';
+    $us['ME'] = 'Maine';
+    $us['MD'] = 'Maryland';
+    $us['MA'] = 'Massachusetts';
+    $us['MI'] = 'Michigan';
+    $us['MN'] = 'Minnesota';
+    $us['MS'] = 'Mississippi';
+    $us['MO'] = 'Missouri';
+    $us['MT'] = 'Montana';
+    $us['NE'] = 'Nebraska';
+    $us['NV'] = 'Nevada';
+    $us['NH'] = 'New Hampshire';
+    $us['NJ'] = 'New Jersey';
+    $us['NM'] = 'New Mexico';
+    $us['NY'] = 'New York';
+    $us['NC'] = 'North Carolina';
+    $us['ND'] = 'North Dakota';
+    $us['OH'] = 'Ohio';
+    $us['OK'] = 'Oklahoma';
+    $us['OR'] = 'Oregon';
+    $us['PA'] = 'Pennsylvania';
+    $us['RI'] = 'Rhode Island';
+    $us['SC'] = 'South Carolina';
+    $us['SD'] = 'South Dakota';
+    $us['TN'] = 'Tennessee';
+    $us['TX'] = 'Texas';
+    $us['UT'] = 'Utah';
+    $us['VT'] = 'Vermont';
+    $us['VA'] = 'Virginia';
+    $us['WA'] = 'Washington';
+    $us['WV'] = 'West Virginia';
+    $us['WI'] = 'Wisconsin';
+    $us['WY'] = 'Wyoming';
+    $us['AA'] = 'Armed Forces (AA)';
+    $us['AE'] = 'Armed Forces (AE)';
+    $us['AP'] = 'Armed Forces (AP)';
+    
+    if($setting->getValue('include_us_territories') == 1){
+      $us['AS'] = 'American Samoa';
+      $us['GU'] = 'Guam';
+      $us['MP'] = 'Northern Mariana Islands';
+      $us['PR'] = 'Puerto Rico';
+      $us['VI'] = 'Virgin Islands';
+      $us['FM'] = 'Federated States of Micronesia';
+      $us['MH'] = 'Marshall Islands';
+      $us['PW'] = 'Palua';
+    }
+    
+    $zones['US'] = $us;
+    
     switch ($code) {
       case 'AU':
-        $zones['NSW'] = 'New South Wales';
-        $zones['NT'] = 'Northern Territory';
-        $zones['QLD'] = 'Queensland';
-        $zones['SA'] = 'South Australia';
-        $zones['TAS'] = 'Tasmania';
-        $zones['VIC'] = 'Victoria';
-        $zones['WA'] = 'Western Australia';
+        $zones = $zones['AU'];
         break;
-	  case 'BR':
-		$zones['Acre'] = 'Acre';
-		$zones['Alagoas'] = 'Alagoas';
-		$zones['Amapa'] = 'Amapa';
-		$zones['Amazonas'] = 'Amazonas';
-		$zones['Bahia'] = 'Bahia';
-		$zones['Ceara'] = 'Ceara';
-		$zones['Distrito Federal'] = 'Distrito Federal';
-		$zones['Espirito Santo'] = 'Espirito Santo';
-		$zones['Goias'] = 'Goias';
-		$zones['Maranhao'] = 'Maranhao';
-		$zones['Mato Grosso'] = 'Mato Grosso';
-		$zones['Mato Grosso do Sul'] = 'Mato Grosso do Sul';
-		$zones['Minas Gerais'] = 'Minas Gerais';
-		$zones['Para'] = 'Para';
-		$zones['Paraiba'] = 'Paraiba';
-		$zones['Parana'] = 'Parana';
-		$zones['Pernambuco'] = 'Pernambuco';
-		$zones['Piaui'] = 'Piaui';
-		$zones['Rio de Janeiro'] = 'Rio de Janeiro';
-		$zones['Rio Grande do Norte'] = 'Rio Grande do Norte';
-		$zones['Rio Grande do Sul'] = 'Rio Grande do Sul';
-		$zones['Rondonia'] = 'Rondonia';
-		$zones['Roraima'] = 'Roraima';
-		$zones['Santa Catarina'] = 'Santa Catarina';
-		$zones['Sao Paulo'] = 'Sao Paulo';
-		$zones['Sergipe'] = 'Sergipe';
-		$zones['Tocantins'] = 'Tocantins';
-		break;
+      case 'BR':
+        $zones = $zones['BR'];
+        break;
       case 'CA':
-        $zones['AB'] = 'Alberta';
-        $zones['BC'] = 'British Columbia';
-        $zones['MB'] = 'Manitoba';
-        $zones['NB'] = 'New Brunswick';
-        $zones['NF'] = 'Newfoundland';
-        $zones['NT'] = 'Northwest Territories';
-        $zones['NS'] = 'Nova Scotia';
-        $zones['NU'] = 'Nunavut';
-        $zones['ON'] = 'Ontario';
-        $zones['PE'] = 'Prince Edward Island';
-        $zones['PQ'] = 'Quebec';
-        $zones['SK'] = 'Saskatchewan';
-        $zones['YT'] = 'Yukon Territory';
+        $zones = $zones['CA'];
+        break;
+      case 'MY':
+        $zones = $zones['MY'];
         break;
       case 'US':
-        $zones['AL'] = 'Alabama';
-        $zones['AK'] = 'Alaska ';
-        $zones['AZ'] = 'Arizona';
-        $zones['AR'] = 'Arkansas';
-        $zones['CA'] = 'California ';
-        $zones['CO'] = 'Colorado';
-        $zones['CT'] = 'Connecticut';
-        $zones['DE'] = 'Delaware';
-        $zones['DC'] = 'D. C.';
-        $zones['FL'] = 'Florida';
-        $zones['GA'] = 'Georgia ';
-        $zones['HI'] = 'Hawaii';
-        $zones['ID'] = 'Idaho';
-        $zones['IL'] = 'Illinois';
-        $zones['IN'] = 'Indiana';
-        $zones['IA'] = 'Iowa';
-        $zones['KS'] = 'Kansas';
-        $zones['KY'] = 'Kentucky';
-        $zones['LA'] = 'Louisiana';
-        $zones['ME'] = 'Maine';
-        $zones['MD'] = 'Maryland';
-        $zones['MA'] = 'Massachusetts';
-        $zones['MI'] = 'Michigan';
-        $zones['MN'] = 'Minnesota';
-        $zones['MS'] = 'Mississippi';
-        $zones['MO'] = 'Missouri';
-        $zones['MT'] = 'Montana';
-        $zones['NE'] = 'Nebraska';
-        $zones['NV'] = 'Nevada';
-        $zones['NH'] = 'New Hampshire';
-        $zones['NJ'] = 'New Jersey';
-        $zones['NM'] = 'New Mexico';
-        $zones['NY'] = 'New York';
-        $zones['NC'] = 'North Carolina';
-        $zones['ND'] = 'North Dakota';
-        $zones['OH'] = 'Ohio';
-        $zones['OK'] = 'Oklahoma';
-        $zones['OR'] = 'Oregon';
-        $zones['PA'] = 'Pennsylvania';
-        $zones['RI'] = 'Rhode Island';
-        $zones['SC'] = 'South Carolina';
-        $zones['SD'] = 'South Dakota';
-        $zones['TN'] = 'Tennessee';
-        $zones['TX'] = 'Texas';
-        $zones['UT'] = 'Utah';
-        $zones['VT'] = 'Vermont';
-        $zones['VA'] = 'Virginia';
-        $zones['WA'] = 'Washington';
-        $zones['WV'] = 'West Virginia';
-        $zones['WI'] = 'Wisconsin';
-        $zones['WY'] = 'Wyoming';
-        $zones['AE'] = 'Armed Forces';
+        $zones = $zones['US'];
         break;
     }
+    
     return $zones;
   }
   
@@ -605,11 +955,19 @@ class Cart66Common {
   /**
    * Make sure path ends in a trailing slash by looking for trailing slash and add if necessary
    */
-  public static function scrubPath($path) {
+  public static function endSlashPath($path) {
     if(stripos(strrev($path), '/') !== 0) {
       $path .= '/';
     }
     return $path;
+  }
+  
+  public static function localTs($timestamp=null) {
+    $timestamp = isset($timestamp) ? $timestamp : time();
+    if(date('T') == 'UTC') {
+      $timestamp += (get_option( 'gmt_offset' ) * 3600 );
+    }
+    return $timestamp;
   }
 
   /**
@@ -633,18 +991,24 @@ class Cart66Common {
   }
 
   public function getPromoMessage() {
-    $promo = $_SESSION['Cart66Cart']->getPromotion();
+    $promo = Cart66Session::get('Cart66Promotion');
     $promoMsg = "none";
     if($promo) {
-      $promoMsg = $promo->code . ' (-' . CURRENCY_SYMBOL . number_format($_SESSION['Cart66Cart']->getDiscountAmount(), 2) . ')';
+      $promoMsg = $promo->getCode() . ' (-' . CART66_CURRENCY_SYMBOL . number_format(Cart66Session::get('Cart66Promotion')->getDiscountAmount(Cart66Session::get('Cart66Cart')), 2) . ')';
     }
     return $promoMsg;
   }
-
+  
+  //increment the number of redemptions
+  public function updatePromoRedemptions() {
+    $promotion = Cart66Session::get('Cart66Promotion');
+    $promotion->updateRedemptions();
+  }
+  
   public function showErrors($errors, $message=null) {
     $out = "<div id='cart66Errors' class='Cart66Error'>";
     if(empty($message)) {
-      $out .= "<p><b>We're sorry.<br/>Your order could not be completed for the following reasons:</b></p>";
+      $out .= "<p><b>" . __("We're sorry.<br/>Your order could not be completed for the following reasons","cart66") . ":</b></p>";
     }
     else {
       $out .= $message;
@@ -666,117 +1030,25 @@ class Cart66Common {
   public function getJqErrorScript(array $jqErrors) {
     $script = '
 <script type="text/javascript">
-var $jq = jQuery.noConflict();
-$jq(document).ready(function() { 
-_script_here_ 
-});
+  (function($){
+    $(document).ready(function(){
+      _script_here_
+    })
+  })(jQuery);
 </script>';
 
     if(count($jqErrors)) {
       $lines = '';
       foreach($jqErrors as $val) {
-        $lines .= "  \$jq('#$val').addClass('errorField);\n";
+        $lines .= "  \$('#$val').addClass('errorField');\n";
       }
     }
     $lines  = rtrim($lines, "\n");
+    Cart66Common::log('[' . basename(__FILE__) . ' - line ' . __LINE__ . "] jq error script lines: $lines");
     $script = str_replace('_script_here_', $lines, $script);
     return $script;
   }
 
-  
-  public static function getEmailReceiptMessage($order) {
-    $product = new Cart66Product();
-    
-    $msg = "ORDER NUMBER: " . $order->trans_id . "\n\n";
-    $hasDigital = false;
-    foreach($order->getItems() as $item) {
-      $product->load($item->product_id);
-      if($hasDigital == false) {
-        $hasDigital = $product->isDigital();
-      }
-      $price = $item->product_price * $item->quantity;
-      // $msg .= "Item: " . $item->item_number . ' ' . $item->description . "\n";
-      $msg .= "Item: " . $item->description . "\n";
-      if($item->quantity > 1) {
-        $msg .= "Quantity: " . $item->quantity . "\n";
-      }
-      $msg .= "Item Price: " . CURRENCY_SYMBOL_TEXT . number_format($item->product_price, 2) . "\n";
-      $msg .= "Item Total: " . CURRENCY_SYMBOL_TEXT . number_format($item->product_price * $item->quantity, 2) . "\n\n";
-      
-      if($product->isGravityProduct()) {
-        $msg .= Cart66GravityReader::displayGravityForm($item->form_entry_ids, true);
-      }
-    }
-
-    if($order->shipping_method != 'None' && $order->shipping_method != 'Download') {
-      $msg .= "Shipping: " . CURRENCY_SYMBOL_TEXT . $order->shipping . "\n";
-    }
-
-    if(!empty($order->coupon) && $order->coupon != 'none') {
-      $msg .= "Coupon: " . $order->coupon . "\n";
-    }
-
-    if($order->tax > 0) {
-      $msg .= "Tax: " . CURRENCY_SYMBOL_TEXT . number_format($order->tax, 2) . "\n";
-    }
-
-    $msg .= "\nTOTAL: " . CURRENCY_SYMBOL_TEXT . number_format($order->total, 2) . "\n";
-
-    if($order->shipping_method != 'None' && $order->shipping_method != 'Download') {
-      $msg .= "\n\nSHIPPING INFORMATION\n\n";
-
-      $msg .= $order->ship_first_name . ' ' . $order->ship_last_name . "\n";
-      $msg .= $order->ship_address . "\n";
-      if(!empty($order->ship_address2)) {
-        $msg .= $order->ship_address2 . "\n";
-      }
-      $msg .= $order->ship_city . ' ' . $order->ship_state . ' ' . $order->ship_zip . "\n" . $order->ship_country . "\n";
-
-      $msg .= "\nDelivery via: " . $order->shipping_method . "\n";
-    }
-
-
-    $msg .= "\n\nBILLING INFORMATION\n\n";
-
-    $msg .= $order->bill_first_name . ' ' . $order->bill_last_name . "\n";
-    $msg .= $order->bill_address . "\n";
-    if(!empty($order->bill_address2)) {
-      $msg .= $order->bill_address2 . "\n";
-    }
-    $msg .= $order->bill_city . ' ' . $order->bill_state . ' ' . $order->bill_zip . "\n" . $order->bill_country . "\n";
-
-    if(!empty($order->phone)) {
-      $phone = self::formatPhone($order->phone);
-      $msg .= "\nPhone: $phone\n";
-    }
-    
-    if(!empty($order->email)) {
-      $msg .= 'Email: ' . $order->email . "\n";
-    }
-
-    $receiptPage = get_page_by_path('store/receipt');
-    $link = get_permalink($receiptPage->ID);
-    if(strstr($link,"?")){
-      $link .= '&ouid=' . $order->ouid;
-    }
-    else{
-      $link .= '?ouid=' . $order->ouid;
-    }
-
-    if($hasDigital) {
-      $msg .= "\nDOWNLOAD LINK\nClick the link below to download your order.\n$link";
-    }
-    else {
-      $msg .= "\nVIEW RECEIPT ONLINE\nClick the link below to view your receipt online.\n$link";
-    }
-    
-    $setting = new Cart66Setting();
-    $msgIntro = Cart66Setting::getValue('receipt_intro');
-    $msg = $msgIntro . " \n----------------------------------\n\n" . $msg;
-    
-    return $msg;
-  }
-  
   /**
    * Return the WP_CONTENT_URL taking into account HTTPS and the possibility that WP_CONTENT_URL may not be defined
    * 
@@ -811,7 +1083,8 @@ _script_here_
    */
   public static function isHttps() {
     $isHttps = false;
-    if(!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] != 'off') {
+    if((!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] != 'off') || 
+        (isset($_SERVER['HTTP_X_FORWARDED_PROTO']) && $_SERVER['HTTP_X_FORWARDED_PROTO'] == 'https')) {
       $isHttps = true;
     }
     return $isHttps;
@@ -823,7 +1096,7 @@ _script_here_
     if(self::isHttps()) {
       $protocol = 'https://';
     }
-    $url = $protocol . $_SERVER['HTTP_HOST'] . $_SERVER['REQUEST_URI'];
+    $url = $protocol . $_SERVER['HTTP_HOST'] . htmlspecialchars($_SERVER['REQUEST_URI'], ENT_QUOTES, 'UTF-8');
     return $url;
   }
   
@@ -837,6 +1110,13 @@ _script_here_
   public function appendQueryString($nvPairs) {
     $url = self::getCurrentPageUrl();
     $url .= strpos($url, '?') ? '&' : '?';
+    $url .= $nvPairs;
+    return $url;
+  }
+  
+  public function appendWurlQueryString($nvPairs) {
+    $url = home_url();
+    $url .= strpos($url, '?') ? '&' : '/?';
     $url .= $nvPairs;
     return $url;
   }
@@ -938,7 +1218,7 @@ _script_here_
           header("Cache-Control: must-revalidate, post-check=0, pre-check=0");
           header("Cache-Control: private",false);
           header("Content-Type: application/octet-stream;");
-          header("Content-Disposition: attachment; filename=\"".$fileName."\";" );
+          header('Content-Disposition: attachment; filename="' . $fileName . '"');
           header("Content-Transfer-Encoding: binary");
           header("Content-Length: $bytes");
 
@@ -997,5 +1277,298 @@ _script_here_
     
     return $onlyPayPalStandard;
   }
+  
+  /**
+   * Convert an array into XML
+   * 
+   * Example use: echo arrayToXml($products,'products');
+   * 
+   * @param array $array       - The array you wish to convert into a XML structure.
+   * @param string $name       - The name you wish to enclose the array in, the 'parent' tag for XML.
+   * @param string $space      - The xml namespace
+   * @param bool $standalone   - This will add a document header to identify this solely as a XML document.
+   * @param bool $beginning    - INTERNAL USE... DO NOT USE!
+   * @param int $nested        - INTERNAL USE... DO NOT USE! The nest level for pretty formatting
+   * @return Gives a string output in a XML structure
+  */
+  public static function arrayToXml($array, $name, $space='', $standalone=false, $beginning=true, $nested=0) {
+    $output = '';
+    if ($beginning) {
+      if($standalone) header("content-type:text/xml;charset=utf-8");
+      if(!isset($output)) { $output = ''; }
+      if($standalone) $output .= '<'.'?'.'xml version="1.0" encoding="UTF-8"'.'?'.'>' . "\n";
+      if(!empty($space)) {
+        $output .= '<' . $name . ' xmlns="' . $space . '">' . "\n";
+      }
+      else {
+        $output .= '<' . $name . '>' . "\n";
+      }
+      $nested = 0;
+    }
+
+    // This is required because XML standards do not allow a tag to start with a number or symbol, you can change this value to whatever you like:
+    $ArrayNumberPrefix = 'ARRAY_NUMBER_';
+
+     foreach ($array as $root=>$child) {
+      if (is_array($child)) {
+        $output .= str_repeat(" ", (2 * $nested)) . '  <' . (is_string($root) ? $root : $ArrayNumberPrefix . $root) . '>' . "\n";
+        $nested++;
+        $output .= self::arrayToXml($child,NULL,NULL,NULL,FALSE, $nested);
+        $nested--;
+        $tag = is_string($root) ? $root : $ArrayNumberPrefix . $root;
+        $tag = array_shift(explode(' ', $tag));
+        $output .= str_repeat(" ", (2 * $nested)) . '  </' . $tag . '>' . "\n";
+      }
+      else {
+        if(!isset($output)) { $output = ''; }
+        $tag = is_string($root) ? $root : $ArrayNumberPrefix . $root;
+        $tag = array_shift(explode(' ', $tag));
+        $output .= str_repeat(" ", (2 * $nested)) . '  <' . (is_string($root) ? $root : $ArrayNumberPrefix . $root) . '>' . $child . '</' . $tag . '>' . "\n";
+      }
+    }
+    
+    $name = array_shift(explode(' ', $name));
+    if ($beginning) $output .= '</' . $name . '>';
+
+    return $output;
+  }
+  
+  public static function testResult($passed, $msg='') {
+    $trace = debug_backtrace();
+    $func = $trace[1]['function'];
+    $line = $trace[0]['line'];
+    $file = $trace[1]['file'];
+    $out = $passed ? "<font color=\"green\">SUCCESS: $func</font>\n" : "<font color=\"red\">FAILED: $func (Line: $line)\nFile: $file</font>\n";
+    if(!empty($msg)) { $out .= $msg . "\n"; }
+    echo $out . "\n";
+  }
+  
+  public static function showReportData(){
+    global $wpdb;
+    $orders = Cart66Common::getTableName('orders');
+    $reportData = array();
+    
+    $sql = "SELECT sum(`total`) from $orders";
+    $lifetimeTotal = $wpdb->get_var($sql);
+    $reportData[] = array("Total Sales","total_sales",$lifetimeTotal);
+    
+    $sql = "SELECT count('id') from $orders";
+    $totalOrders = $wpdb->get_var($sql);
+    $reportData[] = array("Total Orders","total_orders",$totalOrders);
+    
+    $sql = "SELECT ordered_on from $orders order by id asc LIMIT 1";
+    $firstSaleDate = $wpdb->get_var($sql);
+    $reportData[] = array("First Sale","first_sale",$firstSaleDate);
+    
+    $sql = "SELECT ordered_on from $orders order by id desc LIMIT 1";
+    $lastSaleDate = $wpdb->get_var($sql);
+    $reportData[] = array("Last Sale","last_sale",$lastSaleDate);
+    
+    $postTypes = get_post_types('','names');
+    foreach($postTypes as $postType){
+      if(!in_array($postType,array("post","page","attachment","nav_menu_item","revision"))){
+        $customPostTypes[] = $postType;
+      }
+    }
+    $customPostTypes = (empty($customPostTypes)) ? "none" : implode(',',$customPostTypes);
+    $reportData[] = array("Custom Post Types","custom_post_types",$customPostTypes);
+    
+    $output = "First Sale: " . $firstSaleDate . "<br>";
+    $output .= "Last Sale: " . $lastSaleDate . "<br>";
+    $output .= "Total Orders: " . $totalOrders . "<br>";
+    $output .= "Total Sales: " . $lifetimeTotal . "<br>";
+    $output .= "Custom Post Types: " . $customPostTypes . "<br>";
+    $output .= "WordPress Version: " . get_bloginfo("version") . "<br>";
+    $output .= (CART66_PRO) ? "Cart66 Version: Pro " . Cart66Setting::getValue('version') . "<br>" : "Cart66 Version: " .Cart66Setting::getValue('version') . "<br>";
+    $output .= "PHP Version: " . phpversion() . "<br>";
+    
+    
+    //$output .= ": " . "" . "<br>";
+    
+    return $output;
+  }
+  public static function getElapsedTime($datestamp) {
+    $output = false;
+    if(!empty($datestamp) && $datestamp != '0000-00-00 00:00:00') {
+      $totaldelay = Cart66Common::localTs() - strtotime($datestamp);
+      if(Cart66Common::localTs() == strtotime($datestamp)) {
+        $output = __('Now', 'cart66');
+      }
+      elseif($days=floor($totaldelay/86400)) {
+        $totaldelay = $totaldelay % 86400;
+        $output = date('m/d/Y', strtotime($datestamp));
+      }
+      elseif($hours=floor($totaldelay/3600)) {
+        $totaldelay = $totaldelay % 3600;
+        $output = $hours . ' ' . _n('hour', 'hours', $hours, 'cart66') . __(" ago","cart66");
+      }
+      elseif($minutes=floor($totaldelay/60)) {
+        $totaldelay = $totaldelay % 60;
+        $output = $minutes . ' ' . _n('minute', 'minutes', $minutes, 'cart66') . __(" ago","cart66");
+      }
+      elseif($seconds=floor($totaldelay/1)) {
+        $totaldelay = $totaldelay % 1;
+        $output = $seconds . ' ' . _n('second', 'seconds', $seconds, 'cart66') . __(" ago","cart66");
+      }
+    }
+    return $output;
+  }
+  
+  public static function getTimeLeft($datestamp) {
+    $output = false;
+    if(!empty($datestamp) && $datestamp != '0000-00-00 00:00:00') {
+      $timeleft = strtotime($datestamp) - Cart66Common::localTs();
+      if(Cart66Common::localTs() == strtotime($datestamp)) {
+        $output = __('Now', 'cart66');
+      }
+      elseif($days=floor($timeleft/86400)) {
+        $timeleft = $timeleft % 86400;
+        $output = date('m/d/Y', strtotime($datestamp));
+      }
+      elseif($hours=floor($timeleft/3600)) {
+        $timeleft = $timeleft % 3600;
+        $output = $hours . ' ' . _n('hour', 'hours', $hours, 'cart66') . __(" to go","cart66");
+      }
+      elseif($minutes=floor($timeleft/60)) {
+        $timeleft = $timeleft % 60;
+        $output = $minutes . ' ' . _n('minute', 'minutes', $minutes, 'cart66') . __(" to go","cart66");
+      }
+      elseif($seconds=floor($timeleft/1)) {
+        $timeleft = $timeleft % 1;
+        $output = $seconds . ' ' . _n('second', 'seconds', $seconds, 'cart66') . __(" to go","cart66");
+      }
+    }
+    return $output;
+  }
+  
+  public static function cart66UserCan($role) {
+    $access = false;
+    $pageRoles = Cart66Setting::getValue('admin_page_roles');
+    $pageRoles = unserialize($pageRoles);
+    if(current_user_can($pageRoles[$role])) {
+      $access = true;
+    }
+    return $access;
+  }
+
+  public static function getPageRoles($role) {
+    $pageRoles = Cart66Setting::getValue('admin_page_roles');
+    $pageRoles = unserialize($pageRoles);
+    return $pageRoles[$role];
+  }
+  
+  public static function urlIsLive($url) {
+    $ch = curl_init($url);
+    curl_setopt($ch, CURLOPT_NOBODY, true);
+    curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, FALSE); 
+    curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, 2);
+    curl_exec($ch);
+    $response_code = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+    curl_close($ch);
+    return ($response_code == '200') ? true : false;
+  }
+  
+  public static function displayVersionInfo() {
+    if(CART66_PRO) {
+      echo '<meta name="generator" content="Cart66 Professional ' . Cart66Setting::getValue('version') . '" />' . "\n";
+    }
+    else {
+      echo '<meta name="generator" content="Cart66 Lite ' . Cart66Setting::getValue('version') . '" />' . "\n";
+    }
+  }
+  
+  public static function removeCart66Meta() {
+    remove_action('wp_head', array('Cart66Common','displayVersionInfo'));
+  }
+  
+  /**
+   * Return true if the current page is the mijireh checkout page, otherwise return false.
+   * 
+   * @return boolean
+   */
+  public static function isSlurpPage() {
+    global $post;
+    $isSlurp = false;
+    if(isset($post) && is_object($post)) {
+      $content = $post->post_content;
+      if(strpos($content, '{{mj-checkout-form}}') !== false) {
+        $isSlurp = true;
+      }
+    }
+    else {
+      // Cart66Common::log('[' . basename(__FILE__) . ' - line ' . __LINE__ . "] Check Slurp Page Failed: " . print_r($post, 1));
+    }
+    return $isSlurp;
+  }
+  
+  /**
+   * Return an array just like explode, but trim the values of the array.
+   * 
+   * This allows for spaces in CSV strings. The following two strings would return the same array
+   * option1, option2, option3
+   * option1,option2,option3
+   * 
+   * @return array
+   */
+  public static function trimmedExplode($split_on, $string) {
+    $values = array();
+    $arr = explode($split_on, $string);
+    foreach($arr as $val) {
+      $values[] = trim($val);
+    }
+    return $values;
+  }
+  
+  public function sessionType() {
+    $type = Cart66Setting::getValue('session_type');
+    if(!$type) {
+      $type = 'database';
+    }
+    return $type;
+  }
+  
+  // Remove all non-numeric characters except for the decimal
+  public function cleanNumber($string) {
+    $number = preg_replace('/[^\d\.]/', '', $string);
+    return $number;
+  }
+  
+  public function verifyCartPages($outputType = 'full'){
+    $requiredPages = array(
+      "Store" => "store",
+      "Cart" => "store/cart",
+      "Checkout" => "store/checkout",
+      "Express" => "store/express",
+      "IPN" => "store/ipn",
+      "Receipt" => "store/receipt"
+    );
+    $output = '';
+    $success = array();
+    $error = array();
+    foreach($requiredPages as $page => $slug){
+       $wordpress_page = get_page_by_path($slug);
+       if($wordpress_page && !in_array($wordpress_page->post_status, array('trash','draft','private'))){
+         $success[] = "<li class='Cart66PageSuccess'><strong>$page page found</strong></li>";
+       }
+       else{
+         $error[] = "<li class='Cart66PageError'><strong>$page page not found!</strong> The page should be located at " . get_bloginfo('url') . "/$slug</li>";
+       }
+    }
+    
+    switch($outputType){
+      case "success":
+        $output = $success;
+      break;
+      case "error":
+        $output = $error;
+      break;
+      default:
+        $output = array_merge($error, $success);
+    }
+    
+    return implode(" ", $output);
+    
+  }
+  
   
 }

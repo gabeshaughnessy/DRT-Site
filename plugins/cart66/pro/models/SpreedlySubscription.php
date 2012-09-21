@@ -36,12 +36,20 @@ class SpreedlySubscription extends SpreedlyXmlObject {
   }
   
   public function getPriceDescription() {
-    $price = $this->price;
-    $out = CURRENCY_SYMBOL . number_format($price, 2) . ' / ' . $this->terms;
-    if($this->hasFreeTrial()) {
-      $duration = $this->chargeLaterDurationQuantity . '&nbsp;' . $this->chargeLaterDurationUnits;
-      $out .= " <span class='Cart66FreePeriod'>(first $duration free)</span>";
+    $product = new Cart66Product();
+    $spreedlyProduct = $product->getOne("where spreedly_subscription_id = $this->id");
+    if(!empty($spreedlyProduct->priceDescription)) {
+      $out = $spreedlyProduct->priceDescription;
     }
+    else {
+      $price = $this->price;
+      $out = CART66_CURRENCY_SYMBOL . number_format($price, 2) . ' / ' . $this->terms;
+      if($this->hasFreeTrial()) {
+        $duration = $this->chargeLaterDurationQuantity . '&nbsp;' . $this->chargeLaterDurationUnits;
+        $out .= " <span class='Cart66FreePeriod'>(first $duration free)</span>";
+      }
+    }
+    
     return $out;
   }
   
@@ -71,7 +79,7 @@ class SpreedlySubscription extends SpreedlyXmlObject {
         foreach($plans as $plan) {
           $subscription = new SpreedlySubscription();
           $subscription->setData($plan);
-          Cart66Common::log('[' . basename(__FILE__) . ' - line ' . __LINE__ . "] Spreedly subscription enabled: " . $subscription->enabled);
+          /// Cart66Common::log('[' . basename(__FILE__) . ' - line ' . __LINE__ . "] Spreedly subscription enabled: " . $subscription->enabled);
           if('true' == (string)$subscription->enabled) {
             $subscriptions[] = $subscription;
           }

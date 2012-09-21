@@ -6,16 +6,28 @@ class Cart66CartItem {
   private $_optionInfo;
   private $_priceDifference;
   private $_customFieldInfo;
+  private $_productUrl;
   private $_formEntryIds;
   
-  public function __construct($productId=0, $qty=1, $optionInfo='', $priceDifference=0) {
+  public function __construct($productId=0, $qty=1, $optionInfo='', $priceDifference=0, $productUrl='') {
     $this->_productId = $productId;
     $this->_quantity = $qty;
     $this->_optionInfo = $optionInfo;
     $this->_priceDifference = $priceDifference;
+    $this->_productUrl = $productUrl;
     $this->_formEntryIds = array();
     // Cart66Common::log('[' . basename(__FILE__) . ' - line ' . __LINE__ . "] New Cart Item Option Info: $optionInfo");
   }
+  
+  public function getPriceDifference($optionInfo){
+    $output = 0;
+    if(strlen($optionInfo) > 1){
+      $product = new Cart66Product($this->_productId);
+      $output = $product->getOptionPrice($optionInfo);
+    }
+    return $output;
+  }
+  
   
   public function setProductId($id) {
     if(is_numeric($id) && $id > 0) {
@@ -25,6 +37,11 @@ class Cart66CartItem {
   
   public function getProductId() {
     return $this->_productId;
+  }
+  
+  public function getProduct() {
+    $product = new Cart66Product($this->_productId);
+    return $product;
   }
   
   public function setOptionInfo($value) {
@@ -45,8 +62,11 @@ class Cart66CartItem {
       $qty = ceil($qty);
       $product = new Cart66Product($this->_productId);
       
-      if($product->isSubscription()) {
+      if($product->isSubscription() || $product->isMembershipProduct()) {
         // Subscriptions may only have a quantity of 1
+        $qty = 1;
+      }
+      elseif($product->is_user_price == 1){
         $qty = 1;
       }
       else {
@@ -56,7 +76,12 @@ class Cart66CartItem {
             $qty = $product->maxQuantity;
           }
         }
-
+        if($product->minQuantity > 0) {
+          // Only limit quantity when min is set to a value greater than zero
+          if($product->minQuantity > $qty) {
+            $qty = $product->minQuantity;
+          }
+        }
         if($product->gravity_form_id > 0) {
           // Set quantity to zero because this is a gravity forms product with no entries
           if(count($this->_formEntryIds) == 0) {
@@ -93,7 +118,10 @@ class Cart66CartItem {
     if($this->_productId > 0) {
       $p = new Cart66Product();
       $p->load($this->_productId);
-      
+      $errorClass = '';
+      if(is_array(Cart66Session::get('Cart66CustomFieldWarning')) && in_array($p->name, Cart66Session::get('Cart66CustomFieldWarning'))) {
+        $errorClass = ' Cart66ErrorField';
+      }
       if($p->custom == 'single') {
         $desc = $p->custom_desc;
         $value = $this->_customFieldInfo;
@@ -103,16 +131,18 @@ class Cart66CartItem {
           $change = empty($value) ? '' : "<a href='' onclick='' id='change_$itemIndex'>Change</a>";
           $out = "
           <script type='text/javascript'>
-          	jQuery(document).ready(function($){
-          		$('#change_$itemIndex').click(function() {
-          		  $('#customForm_$itemIndex').toggle();
-          		  return false;
-          		});
-            });
+            (function($){
+              $(document).ready(function(){
+                $('#change_$itemIndex').click(function() {
+            		  $('#customForm_$itemIndex').toggle();
+            		  return false;
+            		});
+              })
+            })(jQuery);
           </script>
           <br/><p class=\"Cart66CustomFieldDesc\">$desc:<br/><strong>$value</strong> $change</p>
           <div id='customForm_$itemIndex' style='display: $showCustomForm;'>
-          <input type=\"text\" name=\"customFieldInfo[$itemIndex]\" value=\"$value\" class=\"Cart66CustomTextField\" id=\"custom_field_info_$itemIndex\" />
+          <input type=\"text\" name=\"customFieldInfo[$itemIndex]\" value=\"$value\" class=\"Cart66CustomTextField" . $errorClass . "\" id=\"custom_field_info_$itemIndex\" />
           <input type=\"submit\" value=\"$buttonValue\" /></div>";
         }
         else {
@@ -135,13 +165,15 @@ class Cart66CartItem {
           $brValue = nl2br($value);
           $out = "
           <script type='text/javascript'>
-          	jQuery(document).ready(function($){
-          		$('#change_$itemIndex').click(function() {
-          		  $('#customForm_$itemIndex').toggle();
-          		  return false;
-          		});
-            });
-          </script>
+            (function($){
+              $(document).ready(function(){
+                $('#change_$itemIndex').click(function() {
+            		  $('#customForm_$itemIndex').toggle();
+            		  return false;
+            		});
+              })
+            })(jQuery);
+          </script> 
           <br/><p class=\"Cart66CustomFieldDesc\">$desc:<br/><strong>$brValue</strong><br/>$change</p>
           <div id='customForm_$itemIndex' style='display: $showCustomForm;'>
           <textarea name=\"customFieldInfo[$itemIndex]\" class=\"Cart66CustomTextarea\" id=\"custom_field_info_$itemIndex\" />$value</textarea>
@@ -189,24 +221,76 @@ class Cart66CartItem {
   
   /**
    * Return the price for the product + the price difference applied by selected product options.
-   * If the product is a subscription this price inlcudes both the one time fee and the first 
+   * If the product is a subscription this price includes both the one time fee and the first 
    * subscription payment if the subscription start date is today.
    * 
    * @param boolean $includeFirstSubscription
    * @return float Price of product
    */
   public function getProductPrice() {
-    if($this->_productId > 0) {
-      $product = new Cart66Product($this->_productId);
-      if($this->isPayPalSubscription()) {
-        $price = $product->getCheckoutPrice();
-      }
-      else {
-        $price = $product->price + $this->_priceDifference;
-      }
-      return $price;
+    if($this->_productId < 1) {
+      return false;
     }
-    return false;
+    
+    $product = new Cart66Product($this->_productId);
+    if($this->isPayPalSubscription()) {
+      $price = $product->getCheckoutPrice();
+    }
+    elseif($this->isSpreedlySubscription()) {
+      $price = $product->getCheckoutPrice();
+    }
+    elseif($product->is_user_price == 1 || $product->gravity_form_pricing) {
+      $session_var_name = "userPrice_$this->_productId";
+      
+      if($product->gravity_form_pricing) {
+        $session_var_name .= '_' . $this->getFirstFormEntryId();
+      }
+      
+      //Cart66Common::log('[' . basename(__FILE__) . ' - line ' . __LINE__ . "] Looking for product price in session variable: " . $session_var_name . "\n" . 
+      //  print_r(Cart66Session::dump(), true));
+        
+      if(Cart66Session::get($session_var_name)){
+        // using a user-defined price
+        $userPrice = Cart66Session::get($session_var_name);
+        
+        if($product->min_price > 0 && $userPrice < $product->min_price){
+          $userPrice = $product->min_price;
+        }
+        
+        if($product->max_price > 0 && $userPrice > $product->max_price){
+          $userPrice = $product->max_price;
+        }
+        
+        $price = $userPrice;
+      }
+      else{
+        $price = $product->price;
+      }
+      
+    }
+    else {
+      $price = $product->price + $this->_priceDifference;
+    }
+    
+    return $price;
+  }
+  
+  public function getBaseProductPrice(){
+    $product = new Cart66Product($this->_productId);
+    if($product->is_paypal_subscription) {
+      $price = $product->setup_fee;
+    }
+    else {
+      $price = $product->price + $this->_priceDifference;
+    }
+    
+    if(CART66_PRO && !empty($product->gravity_form_id) && $product->gravity_form_pricing == 1){
+      // gravity form price
+      $price = Cart66GravityReader::getPrice($this->getFirstFormEntryId()) / $this->getQuantity();
+      Cart66Common::log('[' . basename(__FILE__) . ' - line ' . __LINE__ . "] Gravity Form product price: $price");
+    }
+    
+    return $price;
   }
   
   public function getProductPriceDescription() {
@@ -215,6 +299,31 @@ class Cart66CartItem {
       if($product->isPayPalSubscription()) {
         $product = new Cart66PayPalSubscription($product->id);
         $priceDescription = $product->getPriceDescription($product->offerTrial > 0, '(trial)');
+      }
+      elseif($product->isSpreedlySubscription()) {
+        $product = new Cart66Product($product->id);
+        $priceDescription =  $product->getPriceDescription();
+      }
+      elseif($product->is_user_price == 1 || $product->gravity_form_pricing) {
+        $session_var_name = "userPrice_$this->_productId";
+
+        if($product->gravity_form_pricing) {
+          $session_var_name .= '_' . $this->getFirstFormEntryId();
+        }
+        
+        if(Cart66Session::get($session_var_name)) {
+          $userPrice = Cart66Session::get($session_var_name);
+          if($product->min_price > 0 && $userPrice < $product->min_price){
+            $userPrice = $product->min_price;
+          }
+          if($product->max_price > 0 && $userPrice > $product->max_price){
+            $userPrice = $product->max_price;
+          }
+          $priceDescription = CART66_CURRENCY_SYMBOL.number_format($userPrice,2);
+        }
+        else{
+          $priceDescription = $product->price;
+        }
       }
       else {
         $priceDescription = $product->getPriceDescription($this->_priceDifference);
@@ -244,6 +353,17 @@ class Cart66CartItem {
   public function getFormEntryIds() {
     return $this->_formEntryIds;
   }
+
+  /**
+   * Return the first form entry id or false if there are not ids
+   */
+  public function getFirstFormEntryId() {
+    $id = false;
+    if(is_array($this->_formEntryIds)) {
+      $id = reset($this->_formEntryIds);
+    }
+    return $id;
+  }
   
   public function getFullDisplayName() {
     $product = new Cart66Product($this->_productId);
@@ -255,6 +375,10 @@ class Cart66CartItem {
       $fullName .= " ($options)";
     }
     return $fullName;
+  }
+  
+  public function getProductUrl() {
+    return $this->_productUrl;
   }
   
   public function isEqual(Cart66CartItem $item) {
@@ -276,6 +400,11 @@ class Cart66CartItem {
   public function isShipped() {
     $product = new Cart66Product($this->_productId);
     return $product->isShipped();
+  }
+  
+  public function isMembershipProduct() {
+    $product = new Cart66Product($this->_productId);
+    return $product->isMembershipProduct();
   }
   
   public function isSubscription() {
@@ -313,6 +442,19 @@ class Cart66CartItem {
       $subId = $product->spreedlySubscriptionId;
     }
     return $subId;
+  }
+  
+  /**
+   * Return the spreedly subscription product id if the product is a spreedly subscription product. 
+   * Otherwise return false.
+   */
+  public function getSpreedlyProductId() {
+    $productId = false;
+    $product = new Cart66Product($this->_productId);
+    if($product->isSpreedlySubscription()) {
+      $productId = $this->_productId;
+    }
+    return $productId;
   }
   
   /**

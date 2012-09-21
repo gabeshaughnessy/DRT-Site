@@ -2,7 +2,7 @@
 class Cart66Log {
   
   public static function getLogFilePath() {
-    $logFilePath = WP_PLUGIN_DIR . '/cart66/log.txt';
+    $logFilePath = CART66_PATH . '/log.txt';
     return $logFilePath;
   }
   
@@ -14,7 +14,7 @@ class Cart66Log {
    * @throws Cart66Exception on failure to create log file
    */
   public static function createLogFile() {
-    $logDirPath = WP_PLUGIN_DIR . '/cart66';
+    $logDirPath = CART66_PATH;
     $logFilePath = self::getLogFilePath();
     
     if(file_exists($logDirPath)) {

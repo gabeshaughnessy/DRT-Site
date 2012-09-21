@@ -14,10 +14,12 @@ class ZendeskRemoteAuth {
     $message = $name . $email . $externalId . $organization . $token . $ts; 
     $hash = MD5($message); 
 
-    $remoteAuthUrl = "http://" . $prefix . ".zendesk.com/access/remote/?name=" . $name . "&email=".$email . 
+    $remoteAuthUrl = "http://" . $prefix . ".zendesk.com/access/remote/?name=" . urlencode($name) . "&email=". urlencode($email) . 
       "&external_id=".$externalId . "&organization=" . $organization ."&timestamp=". $ts ."&hash=". $hash;
 
+    //Cart66Common::log('[' . basename(__FILE__) . ' - line ' . __LINE__ . "] Message: $message\nRemote Auth URL: $remoteAuthUrl");
+
     header("Location: " . $remoteAuthUrl);
-    exit();
+    exit;
   } 
 }

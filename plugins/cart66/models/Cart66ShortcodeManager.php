@@ -1,14 +1,16 @@
 <?php
 
 class Cart66ShortcodeManager {
-
+  
+  public $manualIsOn;
+  
   /**
    * Short code for displaying shopping cart including the number of items in the cart and links to view cart and checkout
    */
   public function shoppingCart($attrs) {
     $cartPage = get_page_by_path('store/cart');
     $checkoutPage = get_page_by_path('store/checkout');
-    $cart = $_SESSION['Cart66Cart'];
+    $cart = Cart66Session::get('Cart66Cart');
     if(is_object($cart) && $cart->countItems()) {
       ?>
       <div id="Cart66scCartContents">
@@ -16,8 +18,8 @@ class Cart66ShortcodeManager {
         <span id="Cart66scCartCount"><?php echo $cart->countItems(); ?></span>
         <span id="Cart66scCartCountText"><?php echo $cart->countItems() > 1 ? ' items' : ' item' ?></span> 
         <span id="Cart66scCartCountDash">&ndash;</span>
-        <span id="Cart66scCartPrice"><?php echo CURRENCY_SYMBOL . 
-          number_format($cart->getSubTotal() - $cart->getDiscountAmount(), 2); ?>
+        <span id="Cart66scCartPrice"><?php echo CART66_CURRENCY_SYMBOL . 
+          number_format($cart->getSubTotal(), 2); ?>
         </span></a>
         <a id="Cart66scViewCart" href='<?php echo get_permalink($cartPage->ID) ?>'>View Cart</a>
         <span id="Cart66scLinkSeparator"> | </span>
@@ -41,7 +43,9 @@ class Cart66ShortcodeManager {
     $product = new Cart66Product();
     $product->loadFromShortcode($attrs);
     $options = isset($attrs['options']) ? $attrs['options'] : '';
-    $urlOptions = isset($attrs['options']) ? '&options=' . urlencode($options) : '';
+    $urlOptions = isset($attrs['options']) ? '&amp;options=' . urlencode($options) : '';
+    
+    $content = do_shortcode($content);
     
     $iCount = true;
     $iKey = $product->getInventoryKey($options);
@@ -62,7 +66,7 @@ class Cart66ShortcodeManager {
       
 
       $data = array(
-        'url' => $cartLink . $joinChar . "task=add-to-cart-anchor&cart66ItemId=${id}${options}",
+        'url' => $cartLink . $joinChar . "task=add-to-cart-anchor&amp;cart66ItemId=${id}${urlOptions}",
         'text' => $content,
         'class' => $class
       );
@@ -80,7 +84,7 @@ class Cart66ShortcodeManager {
     if(isset($_REQUEST['cart66-task']) && $_REQUEST['cart66-task'] == 'remove-attached-form') {
       $entryId = $_REQUEST['entry'];
       if(is_numeric($entryId)) {
-        $_SESSION['Cart66Cart']->detachFormEntry($entryId);
+        Cart66Session::get('Cart66Cart')->detachFormEntry($entryId);
       }
     }
     $view = Cart66Common::getView('views/cart.php', $attrs);
@@ -88,89 +92,342 @@ class Cart66ShortcodeManager {
   }
 
   public function showReceipt($attrs) {
+    $account = null;
+    
+    if($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['ouid'])) {
+      if(CART66_PRO && isset($_POST['account'])) {
+        $acctData = Cart66Common::postVal('account');
+        Cart66Common::log('[' . basename(__FILE__) . ' - line ' . __LINE__ . "] New Account Data: " . print_r($acctData, true));
+        $account = new Cart66Account();
+        $account->firstName = $acctData['first_name'];
+        $account->lastName = $acctData['last_name'];
+        $account->email = $acctData['email'];
+        $account->username = $acctData['username'];
+        $account->password = md5($acctData['password']);
+        $errors = $account->validate();
+        $jqErrors = $account->getJqErrors();
+        
+        if($acctData['password'] != $acctData['password2']) {
+          $errors[] = __("Passwords do not match","cart66");
+          $jqErrors[] = 'account-password';
+          $jqErrors[] = 'account-password2';
+        }
+        
+        if(count($errors) == 0) { 
+          // Attach account to order
+          $order = new Cart66Order();
+          $ouid = Cart66Common::postVal('ouid');
+          Cart66Common::log('[' . basename(__FILE__) . ' - line ' . __LINE__ . "] Trying to load order with OUID: $ouid");
+          if($order->loadByOuid($ouid)) {
+            
+            // Make sure the order can be loaded, then save the account
+            $account->save();
+            
+            // Attach membership to account and account to the order
+            if($mp = $order->getMembershipProduct()) {
+              $account->attachMembershipProduct($mp, $account->firstName, $account->lastName);
+              $order->account_id = $account->id;
+              $order->save();
+              $account->clear();
+            }
+          }
+          
+        }
+        else {
+          $attrs['errors'] = $errors;
+          $attrs['jqErrors'] = $jqErrors;
+        }
+      }
+    }
+    
+    $attrs['account'] = $account;
     $view = Cart66Common::getView('views/receipt.php', $attrs);
     return $view;
   }
 
   public function paypalCheckout($attrs) {
-    if(!$_SESSION['Cart66Cart']->hasSubscriptionProducts()) {
-      if($_SESSION['Cart66Cart']->getGrandTotal()) {
-        $view = Cart66Common::getView('views/paypal-checkout.php', $attrs);
-        return $view;
-      }
-      else {
-        return $this->manualCheckout();
+    if(Cart66Session::get('Cart66Cart')->countItems() > 0) {
+      if(!Cart66Session::get('Cart66Cart')->hasSubscriptionProducts() && !Cart66Session::get('Cart66Cart')->hasMembershipProducts()) {
+        if(Cart66Session::get('Cart66Cart')->getGrandTotal()) {
+          try {
+            $view = Cart66Common::getView('views/paypal-checkout.php', $attrs);
+          }
+          catch(Cart66Exception $e) {
+            $exception = Cart66Exception::exceptionMessages($e->getCode(), $e->getMessage());
+            $view = Cart66Common::getView('views/error-messages.php', $exception);
+          }
+          return $view;
+        }
+        else {
+          return $this->manualCheckout();
+        }
       }
     }
   }
 
   public function manualCheckout($attrs=null) {
-    if(!$_SESSION['Cart66Cart']->hasSubscriptionProducts()) {
-      require_once(WP_PLUGIN_DIR . "/cart66/gateways/Cart66ManualGateway.php");
-      $manual = new Cart66ManualGateway();
-      $view = $this->_buildCheckoutView($manual);
+    
+    if($this->manualIsOn=="active"){
+      return;
     }
-    else {
-      $view = "<p>Unable to sell subscriptions using the manual checkout gateway.</p>";
+    
+    if(Cart66Session::get('Cart66Cart')->countItems() > 0) {
+      $gatewayName = Cart66Common::postVal('cart66-gateway-name');
+      if($_SERVER['REQUEST_METHOD'] == 'POST' && $gatewayName != 'Cart66ManualGateway') {
+        return;
+      }
+      
+      if(!Cart66Session::get('Cart66Cart')->hasSubscriptionProducts()) {
+        require_once(CART66_PATH . "/gateways/Cart66ManualGateway.php");
+        $manual = new Cart66ManualGateway();
+        $view = $this->_buildCheckoutView($manual);
+        $this->manualIsOn = "active";
+      }
+      else {
+        $view = "<p>Unable to sell subscriptions using the manual checkout gateway.</p>";
+      }
+      
+      return $view;
     }
-    return $view;
   }
 
   public function authCheckout($attrs) {
-    if(!$_SESSION['Cart66Cart']->hasPayPalSubscriptions()) {
-      require_once(WP_PLUGIN_DIR . "/cart66/pro/gateways/Cart66AuthorizeNet.php");
-      $authnet = new Cart66AuthorizeNet();
-      $view = $this->_buildCheckoutView($authnet);
-      return $view;
+    if(Cart66Session::get('Cart66Cart')->countItems() > 0) {
+      $gatewayName = Cart66Common::postVal('cart66-gateway-name');
+      if($_SERVER['REQUEST_METHOD'] == 'POST' && $gatewayName != 'Cart66AuthorizeNet') {
+        return ($gatewayName == "Cart66ManualGateway") ? $this->manualCheckout() : "";
+      }
+
+      if(!Cart66Session::get('Cart66Cart')->hasPayPalSubscriptions()) {
+        require_once(CART66_PATH . "/pro/gateways/Cart66AuthorizeNet.php");
+
+        if(Cart66Session::get('Cart66Cart')->getGrandTotal() > 0 || Cart66Session::get('Cart66Cart')->hasSpreedlySubscriptions()) {
+          try {
+            $authnet = new Cart66AuthorizeNet();
+            $view = $this->_buildCheckoutView($authnet);
+          }
+          catch(Cart66Exception $e) {
+            $exception = Cart66Exception::exceptionMessages($e->getCode(), $e->getMessage());
+            $view = Cart66Common::getView('views/error-messages.php', $exception);
+          }
+          return $view;
+        }
+        elseif(Cart66Session::get('Cart66Cart')->countItems() > 0) {
+          Cart66Common::log('[' . basename(__FILE__) . ' - line ' . __LINE__ . "] Displaying manual checkout instead of Authorize.net Checkout because the cart value is $0.00");
+          return $this->manualCheckout();
+        }
+
+      }
+      else {
+        Cart66Common::log('[' . basename(__FILE__) . ' - line ' . __LINE__ . "] Not rendering Authorize.net checkout form because the cart contains a PayPal subscription");
+      }
     }
-    else {
-      Cart66Common::log('[' . basename(__FILE__) . ' - line ' . __LINE__ . "] Not rendering Authorize.net checkout form because the cart contains a PayPal subscription");
+  }
+  
+  public function payLeapCheckout($attrs) {
+    if(Cart66Session::get('Cart66Cart')->countItems() > 0) {
+        $gatewayName = Cart66Common::postVal('cart66-gateway-name');  
+        if($_SERVER['REQUEST_METHOD'] == 'POST' && $gatewayName != 'Cart66PayLeap') {
+          return ($gatewayName == "Cart66ManualGateway") ? $this->manualCheckout() : "";
+        }
+
+        if(!Cart66Session::get('Cart66Cart')->hasPayPalSubscriptions()) {
+          require_once(CART66_PATH . "/pro/gateways/Cart66PayLeap.php");
+
+          if(Cart66Session::get('Cart66Cart')->getGrandTotal() > 0 || Cart66Session::get('Cart66Cart')->hasSpreedlySubscriptions()) {
+            try {
+              $payleap = new Cart66PayLeap();
+              $view = $this->_buildCheckoutView($payleap);
+            }
+            catch(Cart66Exception $e) {
+              $exception = Cart66Exception::exceptionMessages($e->getCode(), $e->getMessage());
+              $view = Cart66Common::getView('views/error-messages.php', $exception);
+            }
+            return $view;
+          }
+          elseif(Cart66Session::get('Cart66Cart')->countItems() > 0) {
+            Cart66Common::log('[' . basename(__FILE__) . ' - line ' . __LINE__ . "] Displaying manual checkout instead of PayLeap Checkout because the cart value is $0.00");
+            return $this->manualCheckout();
+          }
+
+        }
+        else {
+          Cart66Common::log('[' . basename(__FILE__) . ' - line ' . __LINE__ . "] Not rendering PayLeap checkout form because the cart contains a PayPal subscription");
+        }
+      }
+  }
+  
+  public function ewayCheckout($attrs) {
+     if(Cart66Session::get('Cart66Cart')->countItems() > 0) {
+      $gatewayName = Cart66Common::postVal('cart66-gateway-name');
+      if($_SERVER['REQUEST_METHOD'] == 'POST' && $gatewayName != 'Cart66Eway') {
+        return ($gatewayName == "Cart66ManualGateway") ? $this->manualCheckout() : "";
+      }
+
+      if(!Cart66Session::get('Cart66Cart')->hasPayPalSubscriptions()) {
+        require_once(CART66_PATH . "/pro/gateways/Cart66Eway.php");
+
+        if(Cart66Session::get('Cart66Cart')->getGrandTotal() > 0 || Cart66Session::get('Cart66Cart')->hasSpreedlySubscriptions()) {
+          try {
+            $eway = new Cart66Eway();
+            $view = $this->_buildCheckoutView($eway);
+          }
+          catch(Cart66Exception $e) {
+            $exception = Cart66Exception::exceptionMessages($e->getCode(), $e->getMessage());
+            $view = Cart66Common::getView('views/error-messages.php', $exception);
+          }
+          return $view;
+        }
+        elseif(Cart66Session::get('Cart66Cart')->countItems() > 0) {
+          Cart66Common::log('[' . basename(__FILE__) . ' - line ' . __LINE__ . "] Displaying manual checkout instead of Eway Checkout because the cart value is $0.00");
+          return $this->manualCheckout();
+        }
+
+      }
+      else {
+        Cart66Common::log('[' . basename(__FILE__) . ' - line ' . __LINE__ . "] Not rendering Eway checkout form because the cart contains a PayPal subscription");
+      }
+    }
+  }  
+  
+  public function mwarriorCheckout($attrs) {
+      if(Cart66Session::get('Cart66Cart')->countItems() > 0) {
+        $gatewayName = Cart66Common::postVal('cart66-gateway-name');
+        if($_SERVER['REQUEST_METHOD'] == 'POST' && $gatewayName != 'Cart66MerchantWarrior') {
+          return ($gatewayName == "Cart66ManualGateway") ? $this->manualCheckout() : "";
+        }
+
+        if(!Cart66Session::get('Cart66Cart')->hasPayPalSubscriptions()) {
+          require_once(CART66_PATH . "/pro/gateways/Cart66MWarrior.php");
+
+          if(Cart66Session::get('Cart66Cart')->getGrandTotal() > 0 || Cart66Session::get('Cart66Cart')->hasSpreedlySubscriptions()) {
+            try {
+              $mwarrior = new Cart66MerchantWarrior();
+              $view = $this->_buildCheckoutView($mwarrior);
+            }
+            catch(Cart66Exception $e) {
+              $exception = Cart66Exception::exceptionMessages($e->getCode(), $e->getMessage());
+              $view = Cart66Common::getView('views/error-messages.php', $exception);
+            }
+            return $view;
+          }
+          elseif(Cart66Session::get('Cart66Cart')->countItems() > 0) {
+            Cart66Common::log('[' . basename(__FILE__) . ' - line ' . __LINE__ . "] Displaying manual checkout instead of Merchant Warrior Checkout because the cart value is $0.00");
+            return $this->manualCheckout();
+          }
+
+        }
+        else {
+          Cart66Common::log('[' . basename(__FILE__) . ' - line ' . __LINE__ . "] Not rendering Merchant Warrior checkout form because the cart contains a PayPal subscription");
+        }
+      }
+  }
+  
+  public function stripeCheckout($attrs) {
+    if(Cart66Session::get('Cart66Cart')->countItems() > 0) {
+      $gatewayName = Cart66Common::postVal('cart66-gateway-name');
+      if($_SERVER['REQUEST_METHOD'] == 'POST' && $gatewayName != 'Cart66Stripe') {
+        return ($gatewayName == "Cart66ManualGateway") ? $this->manualCheckout() : "";
+      }
+
+      if(!Cart66Session::get('Cart66Cart')->hasPayPalSubscriptions()) {
+        require_once(CART66_PATH . "/pro/gateways/Cart66Stripe.php");
+
+        if(Cart66Session::get('Cart66Cart')->getGrandTotal() > 0 || Cart66Session::get('Cart66Cart')->hasSpreedlySubscriptions()) {
+          try {
+            $stripe = new Cart66Stripe();
+            $view = $this->_buildCheckoutView($stripe);
+          }
+          catch(Cart66Exception $e) {
+            $exception = Cart66Exception::exceptionMessages($e->getCode(), $e->getMessage());
+            $view = Cart66Common::getView('views/error-messages.php', $exception);
+          }
+          return $view;
+        }
+        elseif(Cart66Session::get('Cart66Cart')->countItems() > 0) {
+          Cart66Common::log('[' . basename(__FILE__) . ' - line ' . __LINE__ . "] Displaying manual checkout instead of Stripe Checkout because the cart value is $0.00");
+          return $this->manualCheckout();
+        }
+
+      }
+      else {
+        Cart66Common::log('[' . basename(__FILE__) . ' - line ' . __LINE__ . "] Not rendering Stripe checkout form because the cart contains a PayPal subscription");
+      }
     }
   }
 
   public function payPalProCheckout($attrs) {
-    if(!$_SESSION['Cart66Cart']->hasPayPalSubscriptions()) {
-      if($_SESSION['Cart66Cart']->getGrandTotal() > 0) {
-        $paypal = new Cart66PayPalPro();
-        $view = $this->_buildCheckoutView($paypal);
-        return $view;
+    if(Cart66Session::get('Cart66Cart')->countItems() > 0) {
+      $gatewayName = Cart66Common::postVal('cart66-gateway-name');
+      if($_SERVER['REQUEST_METHOD'] == 'POST' && $gatewayName != 'Cart66PayPalPro') {
+        return ($gatewayName == "Cart66ManualGateway") ? $this->manualCheckout() : "";
       }
-      elseif($_SESSION['Cart66Cart']->countItems() > 0) {
-        Cart66Common::log('[' . basename(__FILE__) . ' - line ' . __LINE__ . "] Displaying manual checkout instead of PayPal Pro Checkout because the cart value is $0.00");
-        return $this->manualCheckout();
+
+      if(!Cart66Session::get('Cart66Cart')->hasPayPalSubscriptions()) {
+        if(Cart66Session::get('Cart66Cart')->getGrandTotal() > 0 || Cart66Session::get('Cart66Cart')->hasSpreedlySubscriptions()) {
+          try {
+            $paypal = new Cart66PayPalPro();
+            $view = $this->_buildCheckoutView($paypal);
+          }
+          catch(Cart66Exception $e) {
+            $exception = Cart66Exception::exceptionMessages($e->getCode(), $e->getMessage());
+            $view = Cart66Common::getView('views/error-messages.php', $exception);
+          }
+          return $view;
+        }
+        elseif(Cart66Session::get('Cart66Cart')->countItems() > 0) {
+          Cart66Common::log('[' . basename(__FILE__) . ' - line ' . __LINE__ . "] Displaying manual checkout instead of PayPal Pro Checkout because the cart value is $0.00");
+          return $this->manualCheckout();
+        }
       }
-    }
-    else {
-      Cart66Common::log('[' . basename(__FILE__) . ' - line ' . __LINE__ . "] Not rendering PayPal Pro checkout form because the cart contains a PayPal subscription");
+      else {
+        Cart66Common::log('[' . basename(__FILE__) . ' - line ' . __LINE__ . "] Not rendering PayPal Pro checkout form because the cart contains a PayPal subscription");
+      }
     }
   }
 
   public function payPalExpressCheckout($attrs) {
-    if($_SESSION['Cart66Cart']->hasSpreedlySubscriptions()) {
-      Cart66Common::log('[' . basename(__FILE__) . ' - line ' . __LINE__ . "] Not rendering PayPal Express checkout form because the cart contains Spreedly subscriptions");
-      $errorMessage = "<p class='Cart66Error'>Spreedly subscriptions cannot be processed through PayPal Express Checkout</p>";
-      return $errorMessage;
-    }
-    else {
-      if($_SESSION['Cart66Cart']->getGrandTotal() > 0) {
-        $view = Cart66Common::getView('views/paypal-expresscheckout.php', $attrs);
-        return $view;
+    if(Cart66Session::get('Cart66Cart')->countItems() > 0) {
+      $cart = Cart66Session::get('Cart66Cart');
+
+      if($cart->hasSpreedlySubscriptions()) {
+        Cart66Common::log('[' . basename(__FILE__) . ' - line ' . __LINE__ . "] Not rendering PayPal Express checkout form because the cart contains Spreedly subscriptions");
+        $errorMessage = "<p class='Cart66Error'>Spreedly subscriptions cannot be processed through PayPal Express Checkout</p>";
+        return $errorMessage;
       }
-      elseif($_SESSION['Cart66Cart']->countItems() > 0) {
-        Cart66Common::log('[' . basename(__FILE__) . ' - line ' . __LINE__ . "] Displaying manual checkout instead of PayPal Pro Express Checkout because the cart value is $0.00");
-        return $this->manualCheckout();
+      else {
+        if($cart->getGrandTotal() > 0 || $cart->hasPayPalSubscriptions()) {
+          try {
+            $view = Cart66Common::getView('views/paypal-expresscheckout.php', $attrs);
+          }
+          catch(Cart66Exception $e) {
+            $exception = Cart66Exception::exceptionMessages($e->getCode(), $e->getMessage());
+            $view = Cart66Common::getView('views/error-messages.php', $exception);
+          }
+          return $view;
+        }
+        elseif($cart->countItems() > 0) {
+          Cart66Common::log('[' . basename(__FILE__) . ' - line ' . __LINE__ . "] Displaying manual checkout instead of PayPal Pro Express Checkout because the cart value is $0.00");
+          return $this->manualCheckout();
+        }
       }
     }
   }
 
   public function payPalExpress($attrs) {
-    $view = Cart66Common::getView('views/paypal-express.php', $attrs);
+    try {
+      $view = Cart66Common::getView('views/paypal-express.php', $attrs);
+    }
+    catch(Cart66Exception $e) {
+      $exception = Cart66Exception::exceptionMessages($e->getCode(), $e->getMessage());
+      $view = Cart66Common::getView('views/error-messages.php', $exception);
+    }
     return $view;
   }
 
   public function processIPN($attrs) {
-    require_once(WP_PLUGIN_DIR. "/cart66/models/Cart66PayPalIpn.php");
-    require_once(WP_PLUGIN_DIR. "/cart66/gateways/Cart66PayPalStandard.php");
+    require_once(CART66_PATH . "/models/Cart66PayPalIpn.php");
+    require_once(CART66_PATH . "/gateways/Cart66PayPalStandard.php");
     $ipn = new Cart66PayPalIpn();
     if($ipn->validate($_POST)) {
       Cart66Common::log('[' . basename(__FILE__) . ' - line ' . __LINE__ . "] Working with  IPN transaction type: " . $_POST['txn_type']);
@@ -194,13 +451,16 @@ class Cart66ShortcodeManager {
   }
 
   public function cart66Tests() {
-    $view = Cart66Common::getView('tests/environment/tests.php');
+    $view = Cart66Common::getView('views/tests.php');
     $view = "<pre>$view</pre>";
     return $view;
   }
 
   public function clearCart() {
-    unset($_SESSION['Cart66Cart']);
+    Cart66Session::drop('Cart66Cart');
+    Cart66Session::drop('Cart66Promotion');
+    Cart66Session::drop('terms_acceptance');
+    Cart66Session::drop('Cart66ProRateAmount');
   }
   
   public function accountLogin($attrs) {
@@ -222,7 +482,7 @@ class Cart66ShortcodeManager {
     
     if(isset($_POST['cart66-task']) && $_POST['cart66-task'] == 'account-login') {
       if($account->login($_POST['login']['username'], $_POST['login']['password'])) {
-        $_SESSION['Cart66AccountId'] = $account->id;
+        Cart66Session::set('Cart66AccountId', $account->id);
         
         // Send logged in user to the appropriate page after logging in
         $url = Cart66Common::getCurrentPageUrl();
@@ -233,18 +493,23 @@ class Cart66ShortcodeManager {
           }
         }
         else {
-          // Locate logged in user home page
-          $pgs = get_posts('numberposts=1&post_type=any&meta_key=cart66_member&meta_value=home');
-          if(count($pgs)) {
-            $url = get_permalink($pgs[0]->ID);
+          if(Cart66Session::get('Cart66AccessDeniedRedirect')) {
+            $url = Cart66Session::get('Cart66AccessDeniedRedirect');
+          }
+          else {
+            // Locate logged in user home page
+            $pgs = get_posts('numberposts=1&post_type=any&meta_key=cart66_member&meta_value=home');
+            if(count($pgs)) {
+              $url = get_permalink($pgs[0]->ID);
+            }
           }
         }
         Cart66Common::log('[' . basename(__FILE__) . ' - line ' . __LINE__ . "] Redirecting after login to: $url");
+        Cart66Session::drop('Cart66AccessDeniedRedirect');
         wp_redirect($url);
-        exit();
+        exit;
       }
       else {
-        Cart66Common::log('[' . basename(__FILE__) . ' - line ' . __LINE__ . "] Login failed: " . $_POST['login']['email'] . ' -- ' . $_POST['login']['password']);
         $view .= "<p class='Cart66Error'>Login failed</p>";
       }
     }
@@ -258,6 +523,11 @@ class Cart66ShortcodeManager {
    * If no custom field is set then redirect to the current page after logging out
    */
   public function accountLogout($attrs) {
+    // Save zendesk error to session
+    if(isset($_GET['kind']) && $_GET['kind'] == 'error' && isset($_GET['message'])){
+      $zendeskError = $_GET['message'];
+      Cart66Session::set('zendesk_logout_error',$zendeskError,true);
+    }
     $url = Cart66Common::getCurrentPageUrl();
     if(isset($attrs['url']) && !empty($attrs['url'])) {
       $url = $attrs['url'];
@@ -291,8 +561,7 @@ class Cart66ShortcodeManager {
   public function accountInfo($attrs) {
     if(Cart66Common::isLoggedIn()) {
       $data = array();
-      $account = new Cart66Account($_SESSION['Cart66AccountId']);
-      
+      $account = new Cart66Account(Cart66Session::get('Cart66AccountId'));
       if(isset($_POST['cart66-task']) && $_POST['cart66-task'] == 'account-update') {
         $login = $_POST['login'];
         if($login['password'] == $login['password2']) {
@@ -324,9 +593,10 @@ class Cart66ShortcodeManager {
       $data['url'] = false;
       
       if($account->isSpreedlyAccount()) {
+        $accountSub = $account->getCurrentAccountSubscription();
         $text = isset($attrs['text']) ? $attrs['text'] : 'Manage your subscription.';
         $returnUrl = isset($attrs['return']) ? $attrs['return'] : null;
-        $url = $account->getSubscriptionManagementLink($returnUrl);
+        $url = $accountSub->getSubscriptionManagementLink($returnUrl);
         $data['url'] = $url;
         $data['text'] = $text;
       }
@@ -339,10 +609,25 @@ class Cart66ShortcodeManager {
     }
   }
   
+  public function accountDetails($attrs) {
+    if(Cart66Common::isLoggedIn()) {
+      $display = '';
+      $account = new Cart66Account(Cart66Session::get('Cart66AccountId'));
+      $text = isset($attrs['display']) ? $attrs['display'] : null;
+      if(isset($attrs['display']) && $attrs['display'] != '' && isset($account->$attrs['display'])) {
+        $display = $account->$attrs['display'];
+      }
+      return $display;
+    }
+    else {
+      Cart66Common::log('[' . basename(__FILE__) . ' - line ' . __LINE__ . "] Trying to view account details but account holder is not logged into Cart66.");
+    }
+  }
+  
   public function cancelPayPalSubscription($attrs) {
     $link = '';
     if(Cart66Common::isLoggedIn()) {
-      $account = new Cart66Account($_SESSION['Cart66AccountId']);
+      $account = new Cart66Account(Cart66Session::get('Cart66AccountId'));
       if($account->isPayPalAccount()) {
         
         // Look for account cancelation request
@@ -381,7 +666,7 @@ class Cart66ShortcodeManager {
   public function currentSubscriptionPlanName() {
     $name = 'You do not have an active subscription';
     if(Cart66Common::isLoggedIn()) {
-      $account = new Cart66Account($_SESSION['Cart66AccountId']);
+      $account = new Cart66Account(Cart66Session::get('Cart66AccountId'));
       if($subId = $account->getCurrentAccountSubscriptionId()) {
         $sub = new Cart66AccountSubscription($subId);
         $name = $sub->subscriptionPlanName;
@@ -393,7 +678,7 @@ class Cart66ShortcodeManager {
   public function currentSubscriptionFeatureLevel() {
     $level = 'No access';
     if(Cart66Common::isLoggedIn()) {
-      $account = new Cart66Account($_SESSION['Cart66AccountId']);
+      $account = new Cart66Account(Cart66Session::get('Cart66AccountId'));
       if($subId = $account->getCurrentAccountSubscriptionId()) {
         $sub = new Cart66AccountSubscription($subId);
         $level = $sub->featureLevel;
@@ -426,12 +711,32 @@ class Cart66ShortcodeManager {
     die();
   }
   
+  /**
+   * Show content to qualifying feature levels.
+   * 
+   * The $attrs parameter should contain the key "level" which contains
+   * a CSV list of feature levels which are allowed to see the enclosed content.
+   * 
+   * A special feature level of "all_members" may be provided to show the content to
+   * any logged in member regardless of feature level. Note that expired accounts may log
+   * in but will not have a feature level. Therefore providing "all_members" as the required
+   * level will show the content to logged in members with expired accounts.
+   * 
+   * Because Cart66Common::trmmedExplode is used to parse the feature levels, the 
+   * feature level list may include spaces. The following two lists are the same:
+   *   one,two,three,four
+   *   one, two, three, four
+   */
   public function showTo($attrs, $content='null') {
     $isAllowed = false;
     if(Cart66Common::isLoggedIn()) {
+      $levels = Cart66Common::trimmedExplode(',', $attrs['level']);
       $account = new Cart66Account();
-      if($account->load($_SESSION['Cart66AccountId'])) {
-        if($account->isActive() && in_array($account->getFeatureLevel(), explode(',', $attrs['level']))) {
+      if($account->load(Cart66Session::get('Cart66AccountId'))) {
+        if(in_array('all_members', $levels)) {
+          $isAllowed = true;
+        }
+        elseif($account->isActive() && in_array($account->getFeatureLevel(), $levels)) {
           $isAllowed = true;
         }
       }
@@ -441,13 +746,19 @@ class Cart66ShortcodeManager {
     return do_shortcode($content);
   }
   
-  
+  /**
+   * This is the inverse of the showTo shortcode function above.
+   */
   public function hideFrom($attrs, $content='null') {
     $isAllowed = true;
     if(Cart66Common::isLoggedIn()) {
+      $levels = Cart66Common::trimmedExplode(',', $attrs['level']);
       $account = new Cart66Account();
-      if($account->load($_SESSION['Cart66AccountId'])) {
-        if($account->isActive() && in_array($account->getFeatureLevel(), explode(',', $attrs['level']))) {
+      if(in_array('all_members', $levels)) {
+        $isAllowed = false;
+      }
+      elseif($account->load(Cart66Session::get('Cart66AccountId'))) {
+        if($account->isActive() && in_array($account->getFeatureLevel(), $levels)) {
           $isAllowed = false;
         }
       }
@@ -457,27 +768,62 @@ class Cart66ShortcodeManager {
     return do_shortcode($content);
   }
   
+  public function postSale($attrs, $content='null') {
+    $postSale = false;
+    if(isset($_GET['ouid'])) {
+      $order = new Cart66Order();
+      $order->loadByOuid($_GET['ouid']);
+      if($order->viewed == 0) {
+        $postSale = true;
+      }
+    }
+    $content = $postSale ? $content : '';
+    return do_shortcode($content);
+  }
+  
   public function gravityFormToCart($entry) {
-    $formId = Cart66GravityReader::getGravityFormIdForEntry($entry['id']);
-    if($formId) {
-      $productId = Cart66Product::getProductIdByGravityFormId($formId);
-      if($productId > 0) {
-        $product = new Cart66Product($productId);
-        $qty = $product->gravityCheckForEntryQuantity($entry);
-        $options = $product->gravityGetVariationPrices($entry);
-        $_SESSION['Cart66Cart']->addItem($productId, $qty, $options, $entry['id']);
-        $cartPage = get_page_by_path('store/cart');
-        $cartPageLink = get_permalink($cartPage->ID);
-        $_SESSION['Cart66LastPage'] = $_SERVER['HTTP_REFERER'];
-        wp_redirect($cartPageLink);
-        exit;
+    if(CART66_PRO) {
+      $formId = Cart66GravityReader::getGravityFormIdForEntry($entry['id']);
+      if($formId) {
+        $productId = Cart66Product::getProductIdByGravityFormId($formId);
+        if($productId > 0) {
+          $product = new Cart66Product($productId);
+          $qty = $product->gravityCheckForEntryQuantity($entry);
+          $options = $product->gravityGetVariationPrices($entry);
+          $productUrl = Cart66Common::getCurrentPageUrl();
+          $cart = Cart66Session::get('Cart66Cart');
+          $item = $cart->addItem($productId, $qty, $options, $entry['id'], $productUrl);
+          Cart66Common::log('[' . basename(__FILE__) . ' - line ' . __LINE__ . "] Cart Item Value: " . print_r($item, true));
+          Cart66Common::log('[' . basename(__FILE__) . ' - line ' . __LINE__ . "] Should we use the gravity forms price? " . $product->gravity_form_pricing . 
+            ' :: Session value: ' . Cart66Session::get('userPrice_' . $product->id));
+          
+          if($product->gravity_form_pricing == 1) {
+            $price = Cart66GravityReader::getPrice($entry['id']) / $qty;
+            $entry_id = $item->getFirstFormEntryId();
+            $user_price_name = 'userPrice_' . $productId . '_' . $entry_id;
+            Cart66Session::set($user_price_name, $price, true); // Setting the price of a Gravity Forms pricing product
+            Cart66Common::log('[' . basename(__FILE__) . ' - line ' . __LINE__ . "] Using gravity forms pricing for product: Price: $price :: Name: " . $product->name . 
+              " :: Session variable name: $user_price_name");
+          }
+          
+          $cartPage = get_page_by_path('store/cart');
+          $cartPageLink = get_permalink($cartPage->ID);
+          Cart66Session::set('Cart66LastPage', $_SERVER['HTTP_REFERER']);
+          Cart66Common::log('[' . basename(__FILE__) . ' - line ' . __LINE__ . "] Cart66 Session Dump: " . Cart66Session::dump());
+          
+          $entry["status"] = 'unpaid';
+          RGFormsModel::update_lead($entry);
+
+          wp_redirect($cartPageLink);
+          exit;
+        }
       }
     }
   }
   
   public function zendeskRemoteLogin() {
-    if(Cart66Common::isLoggedIn() && isset($_GET['timestamp'])) {
-      $account = new Cart66Account($_SESSION['Cart66AccountId']);
+    if(Cart66Common::isLoggedIn()) {
+      $account = new Cart66Account(Cart66Session::get('Cart66AccountId'));
       if($account) {
         ZendeskRemoteAuth::login($account);
       }
@@ -502,23 +848,308 @@ class Cart66ShortcodeManager {
     return $link;
   }
   
+  public function termsOfService($attrs) {
+    if(CART66_PRO) {
+      $attrs = array("location"=>"Cart66ShortcodeTOS");
+      $view = Cart66Common::getView('/pro/views/terms.php', $attrs);
+      return $view;
+    }
+  }
+  
+  public function accountExpiration($attrs, $content = null){
+    $output = false;
+    if(Cart66Common::isLoggedIn()) {
+      $data = array();
+      $account = new Cart66Account(Cart66Session::get('Cart66AccountId'));
+      $subscription = $account->getCurrentAccountSubscription($account->id);
+      $expirationDate = $subscription->active_until;
+      $format = "m/d/Y";
+      if(isset($attrs['format'])){
+        $format = $attrs['format'];
+      }
+      
+      $output = date($format,strtotime($expirationDate));
+      
+      // expired?
+      if(strtotime($expirationDate) <= strtotime("now")){
+        if(isset($attrs['expired'])){
+          $output = $attrs['expired'];          
+        }
+        if(!empty($content)){
+          $output = $content;
+        }
+      }
+      
+      //lifetime?
+      if($subscription->lifetime == 1){
+        $output = "Lifetime";
+        if(isset($attrs['lifetime'])){
+          $output = $attrs['lifetime'];          
+        }
+      }
+      
+    }
+    
+    return do_shortcode($output);
+  }
+  
+  public function mijirehCheckout() {
+    if(Cart66Session::get('Cart66Cart')->countItems() > 0) {
+      $gatewayName = Cart66Common::postVal('cart66-gateway-name');
+      if($_SERVER['REQUEST_METHOD'] == 'POST' && $gatewayName != 'Cart66Mijireh') {
+        return ($gatewayName == "Cart66ManualGateway") ? $this->manualCheckout() : "";
+      }
+
+      if(!Cart66Session::get('Cart66Cart')->hasPayPalSubscriptions()) {
+        require_once(CART66_PATH . "/gateways/Cart66Mijireh.php");
+
+        if(Cart66Session::get('Cart66Cart')->getGrandTotal() > 0 || Cart66Session::get('Cart66Cart')->hasSpreedlySubscriptions()) {
+          try {
+            $mj = new Cart66Mijireh();
+            $view = $this->_buildCheckoutView($mj);
+          }
+          catch(Cart66Exception $e) {
+            $exception = Cart66Exception::exceptionMessages($e->getCode(), $e->getMessage());
+            $view = Cart66Common::getView('views/error-messages.php', $exception);
+          }
+          return $view;
+        }
+        elseif(Cart66Session::get('Cart66Cart')->countItems() > 0) {
+          Cart66Common::log('[' . basename(__FILE__) . ' - line ' . __LINE__ . "] Displaying manual checkout instead of Mijireh Checkout because the cart value is $0.00");
+          return $this->manualCheckout();
+        }
+
+      }
+      else {
+        Cart66Common::log('[' . basename(__FILE__) . ' - line ' . __LINE__ . "] Not rendering Mijireh checkout form because the cart contains a PayPal subscription");
+      }
+    }
+  }
+  
   protected function _buildCheckoutView($gateway) {
     $ssl = Cart66Setting::getValue('auth_force_ssl');
-    if($ssl == 'yes') {
+    if($ssl) {
       if(!Cart66Common::isHttps()) {
         $sslUrl = "https://" . $_SERVER["SERVER_NAME"] . $_SERVER["REQUEST_URI"];
         wp_redirect($sslUrl);
-        exit();
+        exit;
       }
     }
     
-    if(!$_SESSION['Cart66Cart']->requirePayment()) {
-      require_once(WP_PLUGIN_DIR . "/cart66/gateways/Cart66ManualGateway.php");
+    if(!Cart66Session::get('Cart66Cart')->requirePayment()) {
+      require_once(CART66_PATH . "/gateways/Cart66ManualGateway.php");
       $gateway = new Cart66ManualGateway();
     }
     
     $view = Cart66Common::getView('views/checkout.php', array('gateway' => $gateway));
     return $view;
   }
+  
+  public function emailShortcodes($attrs) {
+    $output = '';
+    if($attrs['source'] == 'receipt' || $attrs['source'] == 'fulfillment' || $attrs['source'] == 'status' || $attrs['source'] == 'followup') {
+      $order = new Cart66Order($attrs['id']);
+      $data = array(
+        'bill_first_name', 
+        'bill_last_name',
+        'bill_address',
+        'bill_address2',
+        'bill_city',
+        'bill_state',
+        'bill_country',
+        'bill_zip',
+        'ship_first_name',
+        'ship_last_name',
+        'ship_address',
+        'ship_address2',
+        'ship_city',
+        'ship_state',
+        'ship_country',
+        'ship_zip',
+        'phone',
+        'email',
+        'coupon',
+        'discount_amount',
+        'trans_id',
+        'shipping',
+        'subtotal',
+        'tax',
+        'total',
+        'non_subscription_total',
+        'ordered_on',
+        'status',
+        'ip',
+        'products',
+        'fulfillment_products',
+        'receipt',
+        'receipt_link',
+        'ouid',
+        'shipping_method',
+        'account_id',
+        'tracking_number'
+      );
+      if(in_array($attrs['att'], $data)) {
+        switch ($attrs['att']) {
+          case 'bill_first_name': // Intentional falling through
+          case 'bill_last_name':
+          case 'ship_first_name':
+          case 'ship_last_name':
+            $output = ucfirst(strtolower($order->$attrs['att']));
+            break;
+          case 'bill_address':
+            if($order->bill_address2 != ''){
+              $output = $order->$attrs['att'] . '<br />' . $order->bill_address2;
+            }
+            else {
+              $output = $order->$attrs['att'];
+            }
+            break;
+          case 'ship_address':
+            if($order->ship_address2 != ''){
+              $output = $order->$attrs['att'] . '<br />' . $order->ship_address2;
+            }
+            else {
+              $output = $order->$attrs['att'];
+            }
+            break;
+          case 'products':
+            $output = Cart66Common::getView('/pro/views/emails/email-products.php', array('order' => $order, 'type' => $attrs['type'], 'code' => 'products'));
+            break;
+          case 'fulfillment_products':
+            $output = Cart66Common::getView('/pro/views/emails/email-products.php', array('order' => $order, 'type' => $attrs['type'], 'code' => 'fulfillment_products', 'variable' => $attrs['variable']));
+            break;
+          case 'receipt':
+            $output = Cart66Common::getView('/pro/views/emails/email-receipt.php', array('order' => $order, 'type' => $attrs['type']));
+            break;
+          case 'phone':
+            $output = Cart66Common::formatPhone($attrs['att']);
+            break;
+          case 'total':
+            $output = CART66_CURRENCY_SYMBOL_TEXT . number_format($order->$attrs['att'], 2);
+            break;
+          case 'tax':
+            $output = CART66_CURRENCY_SYMBOL_TEXT . number_format($order->$attrs['att'], 2);
+            break;
+          case 'receipt_link':
+            $receiptPage = get_page_by_path('store/receipt');
+            $link = get_permalink($receiptPage->ID);
+            if(strstr($link,"?")){
+              $link .= '&ouid=';
+            }
+            else{
+              $link .= '?ouid=';
+            }
+            $output = $link . $order->ouid;
+            break;
+          default:
+            $output = $order->$attrs['att'];
+        }
+
+      }
+      elseif(substr($attrs['att'], 0, 8) == 'tracking') {
+        $output = Cart66AdvancedNotifications::updateTracking($order, $attrs);
+      }
+      elseif(substr($attrs['att'], 0, 5) == 'date:') {
+        $output = Cart66AdvancedNotifications::updateDate($attrs);
+      }
+      elseif(substr($attrs['att'], 0, 12) == 'date_ordered') {
+        $output = Cart66AdvancedNotifications::updateDateOrdered($order, $attrs);
+      }
+      $shipping_options = array(
+        'ship_first_name',
+        'ship_last_name',
+        'ship_address',
+        'ship_address2',
+        'ship_city',
+        'ship_state',
+        'ship_country',
+        'ship_zip',
+      );
+      if(in_array($attrs['att'], $shipping_options) && $order->shipping_method == 'None') {
+        $output = '';
+      }
+    }
+    elseif($attrs['source'] == 'reminder') {
+      $sub = new Cart66AccountSubscription($attrs['id']);
+      $account = new Cart66Account();
+      $account->load($sub->account_id);
+      $data = array(
+        'billing_first_name', 
+        'billing_last_name',
+        'feature_level',
+        'subscription_plan_name',
+        'active_until',
+        'billing_interval',
+        'username',
+        'opt_out_link'
+      );
+      if(in_array($attrs['att'], $data)) {
+        switch ($attrs['att']) {
+          case 'billing_first_name': // Intentional falling through
+          case 'billing_last_name':
+            $output = ucfirst(strtolower($sub->$attrs['att']));
+            break;
+          case 'active_until':
+            $output = date('F d, Y', strtotime($sub->$attrs['att']));
+            break;
+          case 'username':
+            $output = $account->$attrs['att'];
+            break;
+          case 'opt_out_link':
+            $output = Cart66ProCommon::generateUnsubscribeLink($account->id);
+            break;
+          default;
+            $output = $sub->$attrs['att'];
+        }
+        
+      }
+    }
     
+    return $output;
+  }
+  
+  public function emailOptOut() {
+    if(isset($_GET['cart66-task']) && $_GET['cart66-task'] == 'opt_out') {
+      if(isset($_GET['e']) && isset($_GET['t'])) {
+        $email = base64_decode(urldecode($_GET['e']));
+        $verify = Cart66ProCommon::verifyEmailToken($_GET['t'], $email);
+        if($verify == 1) {
+          $data = array(
+            'form' => 'form',
+            'email' => $email,
+            'token' => $_GET['t']
+          );
+          echo Cart66Common::getView('pro/views/unsubscribe.php', $data);
+        }
+        else {
+          if($verify == -1) {
+            $message = __('This email has already been unsubscribed', 'cart66');
+          }
+          if($verify == -2) {
+            $message = __('This email does not exist in our system', 'cart66');
+          }
+          $data = array(
+            'form' => 'error',
+            'message' => $message
+          );
+          echo Cart66Common::getView('pro/views/unsubscribe.php', $data);
+        }
+      }
+    }
+    elseif(isset($_GET['cart66-action']) && $_GET['cart66-action'] == 'opt_out') {
+      Cart66ProCommon::unsubscribeEmailToken($_POST['token'], $_POST['email']);
+      $data = array(
+        'form' => 'opt_out',
+        'email' => $_POST['email']
+      );
+      echo Cart66Common::getView('pro/views/unsubscribe.php', $data);
+    }
+    elseif(isset($_GET['cart66-action']) && $_GET['cart66-action'] == 'cancel_opt_out') {
+      $data = array(
+        'form' => 'cancel'
+      );
+      echo Cart66Common::getView('pro/views/unsubscribe.php', $data);
+    }
+  }
+  
 }

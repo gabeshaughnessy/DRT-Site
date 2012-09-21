@@ -4,14 +4,14 @@
 <script type="text/javascript" src="<?=$site->path?>/javascript/prettyPhoto/jquery.prettyPhoto.js"></script>
 
 <script type="text/javascript">
-	$(document).ready(function() {
+	jQuery(document).ready(function() {
 		// setup ul.tabs to work as tabs for each div directly under div.panes
-		$("ul.tabs").tabs("div.panes > div", { initialIndex: <?=(($_REQUEST['date']) ? 3 : 0)?> });
+		jQuery("ul.tabs").tabs("div.panes > div", { initialIndex: <?=(($_REQUEST['date']) ? 3 : 0)?> });
 		
 		// initialize scrollable
-		$(".scrollable").scrollable();
+		jQuery(".scrollable").scrollable();
 		
-		$(".items a[rel]").prettyPhoto({theme:'facebook'});
+		jQuery(".items a[rel]").prettyPhoto({theme:'facebook'});
 	});
 </script>
 
@@ -166,10 +166,10 @@
 							
 							for(v in fields) {
 								// total number of people
-								count += $('#' + v).val() * 1;
+								count += jQuery('#' + v).val() * 1;
 								
 								// has a required price point been used
-								if(fields[v] && $('#' + v).val()) { required = 1; }
+								if(fields[v] && jQuery('#' + v).val()) { required = 1; }
 							}
 							
 							if(count == 0 || !count) {
@@ -185,8 +185,8 @@
 							}
 							
 							if(err) {
-								$('#error_text').html(err);
-								$('#error_text').fadeIn().delay(2000).fadeOut();
+								jQuery('#error_text').html(err);
+								jQuery('#error_text').fadeIn().delay(2000).fadeOut();
 								return false;
 							}
 						}
@@ -240,13 +240,13 @@
 					<div id="promo_entered" class="promo_entered">
 						<span class="promocode">Promo:
 							<?=$_COOKIE['rezgo_promo']?>
-							<a href="javascript:void(0);" onclick="$('#promo_entered').hide(); $('#promo_hidden').fadeIn();">[change]</a>
+							<a href="javascript:void(0);" onclick="jQuery('#promo_entered').hide(); jQuery('#promo_hidden').fadeIn();">[change]</a>
 						</span>
 					</div>
 					<? } ?>
 					
 					<div id="promo_hidden" class="promo_hidden" <? if($_COOKIE['rezgo_promo']) { ?>style="display:none;"<? } ?>>
-						<form onsubmit="document.location.href = '<?=$_SERVER['REQUEST_URI']?><?=((strpos($_SERVER['REQUEST_URI'], '?') !== false) ? '&' : '?')?>promo=' + $('#promo').val(); return false;">
+						<form onsubmit="document.location.href = '<?=$_SERVER['REQUEST_URI']?><?=((strpos($_SERVER['REQUEST_URI'], '?') !== false) ? '&' : '?')?>promo=' + jQuery('#promo').val(); return false;">
 				  		<span class="promocode">Promo:
 				  			<input type="text" class="promo_input" name="promo" id="promo" value="<?=$_COOKIE['rezgo_promo']?>">
 								<input type="submit" class="promo_submit" value="apply">
@@ -301,7 +301,7 @@
 
 <!-- social media buttons -->
 <div class="social_media">
-  <a href="javascript:void(0);" id="social_url" onclick="if($('#short_url').css('display') == 'none') { $('#short_url').fadeIn(); $('#short_url_result').load('<?=$site->base?>/shorturl_ajax.php?url=' + escape(document.location.href), function() { $('#short_url_text').val( $('#short_url_result').html() ); document.getElementById('short_url_text').focus(); document.getElementById('short_url_text').select(); }); } else { $('#short_url').fadeOut(); }"><img src="<?=$site->path?>/images/icon_shorten.png" title="Get Short URL" /></a>
+  <a href="javascript:void(0);" id="social_url" onclick="if(jQuery('#short_url').css('display') == 'none') { jQuery('#short_url').fadeIn(); jQuery('#short_url_result').load('<?=$site->base?>/shorturl_ajax.php?url=' + escape(document.location.href), function() { jQuery('#short_url_text').val( jQuery('#short_url_result').html() ); document.getElementById('short_url_text').focus(); document.getElementById('short_url_text').select(); }); } else { jQuery('#short_url').fadeOut(); }"><img src="<?=$site->path?>/images/icon_shorten.png" title="Get Short URL" /></a>
   <a href="javascript:void(0);" id="social_facebook" onclick="window.open('http://www.facebook.com/sharer.php?u=' + escape(document.location.href) + '&t=<?=urlencode($item->name)?>','facebook','location=1,status=1,scrollbars=1,width=600,height=400');"><img src="<?=$site->path?>/images/icon_fb.png" title="Share on Facebook"  alt="Share on Facebook" /></a>
   <a href="javascript:void(0);" id="social_twitter" onclick="window.open('http://twitter.com/share?text=<?=urlencode('I found this great thing to do! "'.$item->name.'"')?>&url=' + escape(document.location.href)<? if($site->exists($site->getTwitterName())) { ?> + '&via=<?=$site->getTwitterName()?>'<? } ?>,'tweet','location=1,status=1,scrollbars=1,width=500,height=350');"><img src="<?=$site->path?>/images/icon_twitter.png" title="Share on Twitter" /></a>	
  	<a href="javascript:void(0);" id="social_tripit" onclick="window.open('http://www.tripit.com/trip_item/createBookmark?url=' + escape(document.location.href) + '&display_name=<?=urlencode($item->name)?>','tripit','location=1,status=1,scrollbars=1,width=970,height=500');"><img src="<?=$site->path?>/images/icon_tripit.png" title="Add to TripIt Clipper" /></a>
